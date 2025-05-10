@@ -147,265 +147,280 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-6xl p-6 relative">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-6xl p-6 relative max-h-[90vh] overflow-y-auto">
         <button
           type="button"
-          className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+          className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
           onClick={onClose}
           aria-label="Close modal"
         >
           ×
         </button>
         
-        <h2 className="text-xl font-bold mb-4 text-blue-700">สร้างค่าใช้จ่าย</h2>
-        
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-4">
-              <label htmlFor="documentNumber" className="block text-sm font-medium">
-                เลขที่เอกสาร
-              </label>
-              <input
-                id="documentNumber"
-                {...register('documentNumber')}
-                className="w-full border rounded px-2 py-1"
-                disabled={true}
-              />
-              {errors.documentNumber && (
-                <p className="text-red-500 text-sm mt-1">{errors.documentNumber.message}</p>
-              )}
-
-              <label htmlFor="vendorName" className="block text-sm font-medium mt-2">
-                ชื่อผู้จำหน่าย
-              </label>
-              <input
-                id="vendorName"
-                {...register('vendorName')}
-                className="w-full border rounded px-2 py-1"
-              />
-              {errors.vendorName && (
-                <p className="text-red-500 text-sm mt-1">{errors.vendorName.message}</p>
-              )}
-
-              <label htmlFor="vendorDetail" className="block text-sm font-medium mt-2">
-                ข้อมูลผู้จำหน่าย
-              </label>
-              <textarea
-                id="vendorDetail"
-                {...register('vendorDetail')}
-                className="w-full border rounded px-2 py-1"
-                rows={3}
-              />
-              {errors.vendorDetail && (
-                <p className="text-red-500 text-sm mt-1">{errors.vendorDetail.message}</p>
-              )}
-
-              <label htmlFor="project" className="block text-sm font-medium mt-2">
-                โปรเจ็ค
-              </label>
-              <input
-                id="project"
-                {...register('project')}
-                className="w-full border rounded px-2 py-1"
-              />
-              {errors.project && (
-                <p className="text-red-500 text-sm mt-1">{errors.project.message}</p>
-              )}
-
-              <label htmlFor="referenceNumber" className="block text-sm font-medium mt-2">
-                เลขที่อ้างอิง
-              </label>
-              <input
-                id="referenceNumber"
-                {...register('referenceNumber')}
-                className="w-full border rounded px-2 py-1"
-              />
-              {errors.referenceNumber && (
-                <p className="text-red-500 text-sm mt-1">{errors.referenceNumber.message}</p>
-              )}
+        <h2 className="text-2xl font-bold mb-6 text-blue-700">สร้างค่าใช้จ่าย</h2>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          {/* กลุ่ม: ข้อมูลเอกสารและผู้จำหน่าย */}
+          <div className="bg-gray-50 rounded-lg p-4 mb-6 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="documentNumber" className="block text-sm font-semibold text-gray-700 mb-1">
+                  เลขที่เอกสาร
+                </label>
+                <input
+                  id="documentNumber"
+                  {...register('documentNumber')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                  disabled={true}
+                />
+                {errors.documentNumber && (
+                  <p className="text-red-500 text-xs mt-1">{errors.documentNumber.message}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="date" className="block text-sm font-semibold text-gray-700 mb-1">
+                  วันที่
+                </label>
+                <input
+                  id="date"
+                  type="date"
+                  {...register('date')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                />
+                {errors.date && (
+                  <p className="text-red-500 text-xs mt-1">{errors.date.message}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="vendorName" className="block text-sm font-semibold text-gray-700 mb-1 mt-2 md:mt-0">
+                  ชื่อผู้จำหน่าย
+                </label>
+                <input
+                  id="vendorName"
+                  {...register('vendorName')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                />
+                {errors.vendorName && (
+                  <p className="text-red-500 text-xs mt-1">{errors.vendorName.message}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="creditTerm" className="block text-sm font-semibold text-gray-700 mb-1 mt-2 md:mt-0">
+                  เครดิต (วัน)
+                </label>
+                <input
+                  id="creditTerm"
+                  type="number"
+                  {...register('creditTerm', { valueAsNumber: true })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-right focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                />
+                {errors.creditTerm && (
+                  <p className="text-red-500 text-xs mt-1">{errors.creditTerm.message}</p>
+                )}
+              </div>
+              <div className="md:col-span-2">
+                <label htmlFor="vendorDetail" className="block text-sm font-semibold text-gray-700 mb-1 mt-2">
+                  ข้อมูลผู้จำหน่าย
+                </label>
+                <textarea
+                  id="vendorDetail"
+                  {...register('vendorDetail')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                  rows={3}
+                />
+                {errors.vendorDetail && (
+                  <p className="text-red-500 text-xs mt-1">{errors.vendorDetail.message}</p>
+                )}
+              </div>
             </div>
+          </div>
 
-            <div className="space-y-4">
-              <label htmlFor="date" className="block text-sm font-medium">
-                วันที่
-              </label>
-              <input
-                id="date"
-                type="date"
-                {...register('date')}
-                className="w-full border rounded px-2 py-1"
-              />
-              {errors.date && (
-                <p className="text-red-500 text-sm mt-1">{errors.date.message}</p>
-              )}
-
-              <label htmlFor="creditTerm" className="block text-sm font-medium mt-2">
-                เครดิต (วัน)
-              </label>
-              <input
-                id="creditTerm"
-                type="number"
-                {...register('creditTerm', { valueAsNumber: true })}
-                className="w-full border rounded px-2 py-1 text-right"
-              />
-              {errors.creditTerm && (
-                <p className="text-red-500 text-sm mt-1">{errors.creditTerm.message}</p>
-              )}
-
-              <label htmlFor="dueDate" className="block text-sm font-medium mt-2">
-                ครบกำหนด
-              </label>
-              <input
-                id="dueDate"
-                type="date"
-                {...register('dueDate')}
-                className="w-full border rounded px-2 py-1"
-              />
-              {errors.dueDate && (
-                <p className="text-red-500 text-sm mt-1">{errors.dueDate.message}</p>
-              )}
-
-              <label htmlFor="currency" className="block text-sm font-medium mt-2">
-                สกุลเงิน
-              </label>
-              <select
-                id="currency"
-                {...register('currency')}
-                className="w-full border rounded px-2 py-1"
-              >
-                <option value="THB">THB - ไทย</option>
-                <option value="USD">USD - US Dollar</option>
-                <option value="EUR">EUR - Euro</option>
-              </select>
-              {errors.currency && (
-                <p className="text-red-500 text-sm mt-1">{errors.currency.message}</p>
-              )}
-
-              <label htmlFor="discount" className="block text-sm font-medium mt-2">
-                ส่วนลด
-              </label>
-              <input
-                id="discount"
-                type="number"
-                {...register('discount', { valueAsNumber: true })}
-                className="w-full border rounded px-2 py-1 text-right"
-              />
-              {errors.discount && (
-                <p className="text-red-500 text-sm mt-1">{errors.discount.message}</p>
-              )}
-
-              <div className="flex items-center mt-2">
+          {/* กลุ่ม: รายละเอียดเอกสาร */}
+          <div className="bg-gray-50 rounded-lg p-4 mb-6 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="project" className="block text-sm font-semibold text-gray-700 mb-1">
+                  โปรเจ็ค
+                </label>
+                <input
+                  id="project"
+                  {...register('project')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                />
+                {errors.project && (
+                  <p className="text-red-500 text-xs mt-1">{errors.project.message}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="dueDate" className="block text-sm font-semibold text-gray-700 mb-1">
+                  ครบกำหนด
+                </label>
+                <input
+                  id="dueDate"
+                  type="date"
+                  {...register('dueDate')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                />
+                {errors.dueDate && (
+                  <p className="text-red-500 text-xs mt-1">{errors.dueDate.message}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="referenceNumber" className="block text-sm font-semibold text-gray-700 mb-1">
+                  เลขที่อ้างอิง
+                </label>
+                <input
+                  id="referenceNumber"
+                  {...register('referenceNumber')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                />
+                {errors.referenceNumber && (
+                  <p className="text-red-500 text-xs mt-1">{errors.referenceNumber.message}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="currency" className="block text-sm font-semibold text-gray-700 mb-1">
+                  สกุลเงิน
+                </label>
+                <select
+                  id="currency"
+                  {...register('currency')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                >
+                  <option value="THB">THB - ไทย</option>
+                  <option value="USD">USD - US Dollar</option>
+                  <option value="EUR">EUR - Euro</option>
+                </select>
+                {errors.currency && (
+                  <p className="text-red-500 text-xs mt-1">{errors.currency.message}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="discount" className="block text-sm font-semibold text-gray-700 mb-1">
+                  ส่วนลด
+                </label>
+                <input
+                  id="discount"
+                  type="number"
+                  {...register('discount', { valueAsNumber: true })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-right focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                />
+                {errors.discount && (
+                  <p className="text-red-500 text-xs mt-1">{errors.discount.message}</p>
+                )}
+              </div>
+              <div className="flex items-center mt-6">
                 <input
                   id="vatIncluded"
                   type="checkbox"
                   {...register('vatIncluded')}
-                  className="mr-2"
+                  className="mr-2 h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-400"
                 />
-                <label htmlFor="vatIncluded" className="text-sm font-medium">
+                <label htmlFor="vatIncluded" className="text-sm font-semibold text-gray-700">
                   ราคารวมภาษี
                 </label>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mt-4">
+          {/* กลุ่ม: หมายเหตุ/บันทึกภายใน */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label htmlFor="remark" className="block text-sm font-medium">
+              <label htmlFor="remark" className="block text-sm font-semibold text-gray-700 mb-1">
                 หมายเหตุ
               </label>
               <textarea
                 id="remark"
                 {...register('remark')}
-                className="w-full border rounded px-2 py-1"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                 rows={2}
               />
               {errors.remark && (
-                <p className="text-red-500 text-sm mt-1">{errors.remark.message}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.remark.message}</p>
               )}
             </div>
             <div>
-              <label htmlFor="internalNote" className="block text-sm font-medium">
+              <label htmlFor="internalNote" className="block text-sm font-semibold text-gray-700 mb-1">
                 บันทึกภายใน
               </label>
               <textarea
                 id="internalNote"
                 {...register('internalNote')}
-                className="w-full border rounded px-2 py-1"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                 rows={2}
               />
               {errors.internalNote && (
-                <p className="text-red-500 text-sm mt-1">{errors.internalNote.message}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.internalNote.message}</p>
               )}
             </div>
           </div>
 
-          <div className="flex justify-end items-center gap-4 mt-2">
+          <div className="flex justify-end items-center gap-4 mt-2 mb-6">
             <span className="text-lg font-bold">จำนวนเงินรวมทั้งสิ้น:</span>
             <span className="text-2xl text-blue-600 font-bold">{watch('totalAmount').toFixed(2)}</span>
           </div>
 
           {/* รายละเอียดรายการ */}
-          <div>
-            <label className="block text-sm font-medium mb-2">รายละเอียดรายการค่าใช้จ่าย</label>
+          <div className="bg-gray-50 rounded-lg p-4 mb-6 shadow-sm">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">รายละเอียดรายการค่าใช้จ่าย</label>
             <div className="overflow-x-auto">
-              <table className="min-w-full border rounded">
+              <table className="min-w-full border rounded-lg shadow-sm bg-white border-gray-200">
                 <thead>
                   <tr className="bg-blue-400 text-white">
-                    <th className="px-2 py-1">ลำดับ</th>
-                    <th className="px-2 py-1">รายละเอียด</th>
-                    <th className="px-2 py-1">หมวดหมู่</th>
-                    <th className="px-2 py-1">จำนวน</th>
-                    <th className="px-2 py-1">หน่วย</th>
-                    <th className="px-2 py-1">ราคาต่อหน่วย</th>
-                    <th className="px-2 py-1">ราคารวม</th>
-                    <th className="px-2 py-1"></th>
+                    <th className="px-2 py-2">ลำดับ</th>
+                    <th className="px-2 py-2">รายละเอียด</th>
+                    <th className="px-2 py-2">หมวดหมู่</th>
+                    <th className="px-2 py-2">จำนวน</th>
+                    <th className="px-2 py-2">หน่วย</th>
+                    <th className="px-2 py-2">ราคาต่อหน่วย</th>
+                    <th className="px-2 py-2 whitespace-nowrap">ราคารวม</th>
+                    <th className="px-2 py-2"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {fields.map((field: { id: string }, index: number) => (
-                    <tr key={field.id} className="border-b">
-                      <td className="px-2 py-1 text-center">{index + 1}</td>
-                      <td className="px-2 py-1">
+                    <tr key={field.id} className="border-b border-gray-200 hover:bg-blue-50 transition">
+                      <td className="px-2 py-2 text-center">{index + 1}</td>
+                      <td className="px-2 py-2">
                         <input
                           {...register(`expenseItems.${index}.description`)}
-                          className="w-full border rounded px-2 py-1"
+                          className="w-full border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                         />
                       </td>
-                      <td className="px-2 py-1">
+                      <td className="px-2 py-2">
                         <input
                           {...register(`expenseItems.${index}.category`)}
-                          className="w-full border rounded px-2 py-1"
+                          className="w-full border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                         />
                       </td>
-                      <td className="px-2 py-1">
+                      <td className="px-2 py-2">
                         <input
                           type="number"
                           {...register(`expenseItems.${index}.quantity`, { valueAsNumber: true })}
-                          className="w-full border rounded px-2 py-1 text-right"
+                          className="w-full border border-gray-300 rounded-lg px-2 py-1 text-right focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                         />
                       </td>
-                      <td className="px-2 py-1">
+                      <td className="px-2 py-2">
                         <input
                           {...register(`expenseItems.${index}.unit`)}
-                          className="w-full border rounded px-2 py-1"
+                          className="w-full border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                         />
                       </td>
-                      <td className="px-2 py-1">
+                      <td className="px-2 py-2">
                         <input
                           type="number"
                           {...register(`expenseItems.${index}.unitPrice`, { valueAsNumber: true })}
-                          className="w-full border rounded px-2 py-1 text-right"
+                          className="w-full border border-gray-300 rounded-lg px-2 py-1 text-right focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                         />
                       </td>
-                      <td className="px-2 py-1 text-right">
+                      <td className="px-2 py-2 text-right">
                         {watchExpenseItems[index]?.amount.toFixed(2)}
                       </td>
-                      <td className="px-2 py-1 text-center">
+                      <td className="px-2 py-2 text-center">
                         {fields.length > 1 && (
                           <button
                             type="button"
                             onClick={() => remove(index)}
-                            className="text-red-500"
+                            className="text-red-500 hover:underline text-sm"
                           >
                             ลบ
                           </button>
@@ -418,25 +433,25 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
               <button
                 type="button"
                 onClick={() => append({ description: '', category: '', quantity: 1, unit: '', unitPrice: 0, amount: 0 })}
-                className="mt-2 px-3 py-1 border border-blue-500 text-blue-600 rounded hover:bg-blue-50"
+                className="mt-3 px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 font-semibold transition"
               >
                 + เพิ่มแถวรายการ
               </button>
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-200 rounded"
+              className="px-5 py-2 bg-gray-200 rounded-lg font-semibold hover:bg-gray-300 transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50"
+              className="px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition"
             >
               {isSubmitting ? 'Saving...' : 'Save'}
             </button>
