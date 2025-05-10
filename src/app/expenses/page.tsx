@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { expenseService, Expense } from "@/services/expenseService";
 
 function CreateExpenseModal({ open, onClose, onCreated }: { open: boolean, onClose: () => void, onCreated: () => void }) {
@@ -151,11 +151,20 @@ export default function ExpensesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [actionMenuOpen, setActionMenuOpen] = useState<number | null>(null);
+  const [editExpense, setEditExpense] = useState<Expense | null>(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const actionMenuRef = useRef<HTMLDivElement | null>(null);
 
   const fetchExpenses = async () => {
     try {
-      const data = await expenseService.getAllExpenses();
-      setExpenses(data);
+      const data = await expenseService.getAllExpenses(pageNumber, pageSize);
+      setExpenses(data.items);
+      setTotalCount(data.totalCount);
+      setTotalPages(data.totalPages);
       setError(null);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
@@ -168,7 +177,23 @@ export default function ExpensesPage() {
 
   useEffect(() => {
     fetchExpenses();
-  }, []);
+  }, [pageNumber, pageSize]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
+        setActionMenuOpen(null);
+      }
+    }
+    if (actionMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [actionMenuOpen]);
 
   const handleRetry = () => {
     setLoading(true);
@@ -220,11 +245,12 @@ export default function ExpensesPage() {
                   <th className="px-4 py-2 text-left font-semibold">หมวดหมู่</th>
                   <th className="px-4 py-2 text-left font-semibold">จำนวนเงิน</th>
                   <th className="px-4 py-2 text-left font-semibold">สถานะ</th>
+                  <th className="px-4 py-2 text-left font-semibold">การดำเนินการ</th>
                 </tr>
               </thead>
               <tbody>
                 {expenses.map((expense) => (
-                  <tr key={expense.id} className="border-b hover:bg-gray-50">
+                  <tr key={expense.id} className="border-b hover:bg-gray-50 relative">
                     <td className="px-4 py-3">
                       <input type="checkbox" className="accent-blue-600" />
                     </td>
@@ -246,6 +272,43 @@ export default function ExpensesPage() {
                         {new Date(expense.dueDate) > new Date() ? 'Active' : 'Overdue'}
                       </span>
                     </td>
+                    <td className="px-4 py-3 relative">
+                      <button
+                        onClick={() => setActionMenuOpen(actionMenuOpen === expense.id ? null : expense.id)}
+                        className="p-1 rounded hover:bg-gray-200"
+                      >
+                        ⋮
+                      </button>
+                      {actionMenuOpen === expense.id && (
+                        <div ref={actionMenuRef} className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
+                          <button
+                            className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                            onClick={() => {
+                              setEditExpense(expense);
+                              setActionMenuOpen(null);
+                            }}
+                          >
+                            แก้ไข
+                          </button>
+                          <button
+                            className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
+                            onClick={async () => {
+                              setActionMenuOpen(null);
+                              if (window.confirm("ยืนยันการลบรายการนี้?")) {
+                                try {
+                                  await expenseService.deleteExpense(expense.id);
+                                  fetchExpenses();
+                                } catch (err) {
+                                  alert("เกิดข้อผิดพลาดในการลบ");
+                                }
+                              }
+                            }}
+                          >
+                            ลบ
+                          </button>
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -264,14 +327,43 @@ export default function ExpensesPage() {
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
-        <div>Items per page
-          <select className="ml-2 border rounded px-2 py-1">
-            <option>20</option>
-            <option>50</option>
-            <option>100</option>
+        <div>
+          Items per page
+          <select 
+            className="ml-2 border rounded px-2 py-1"
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setPageNumber(1); // Reset to first page when changing page size
+            }}
+          >
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
           </select>
         </div>
-        <div className="text-blue-600 cursor-pointer">แสดงทั้งหมด</div>
+        <div className="flex items-center gap-4">
+          <div>
+            Showing {((pageNumber - 1) * pageSize) + 1} to {Math.min(pageNumber * pageSize, totalCount)} of {totalCount} items
+          </div>
+          <div className="flex gap-2">
+            <button
+              className="px-2 py-1 border rounded disabled:opacity-50"
+              onClick={() => setPageNumber(prev => Math.max(1, prev - 1))}
+              disabled={pageNumber === 1}
+            >
+              Previous
+            </button>
+            <button
+              className="px-2 py-1 border rounded disabled:opacity-50"
+              onClick={() => setPageNumber(prev => Math.min(totalPages, prev + 1))}
+              disabled={pageNumber === totalPages}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

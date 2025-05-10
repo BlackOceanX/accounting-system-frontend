@@ -51,10 +51,23 @@ export interface Expense {
   expenseItems: ExpenseItem[] | null;
 }
 
+export interface PaginatedResponse<T> {
+  items: T[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export const expenseService = {
-  async getAllExpenses(): Promise<Expense[]> {
+  async getAllExpenses(pageNumber: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Expense>> {
     try {
-      const response = await api.get('/Expenses');
+      const response = await api.get('/Expenses', {
+        params: {
+          pageNumber,
+          pageSize
+        }
+      });
       return response.data;
     } catch (error) {
       if (error instanceof AxiosError) {
