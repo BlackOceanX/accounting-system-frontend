@@ -9,18 +9,21 @@ interface ExpenseListProps {
 
 export function ExpenseList({ expenses, onEdit, onDelete }: ExpenseListProps) {
   const [actionMenuOpen, setActionMenuOpen] = React.useState<number | null>(null);
+  const [actionMenuPosition, setActionMenuPosition] = React.useState<{ x: number; y: number } | null>(null);
   const actionMenuRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
         setActionMenuOpen(null);
+        setActionMenuPosition(null);
       }
     }
     if (actionMenuOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     } else {
       document.removeEventListener("mousedown", handleClickOutside);
+      setActionMenuPosition(null);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -70,30 +73,56 @@ export function ExpenseList({ expenses, onEdit, onDelete }: ExpenseListProps) {
               </td>
               <td className="px-4 py-3 relative">
                 <button
-                  onClick={() => setActionMenuOpen(actionMenuOpen === expense.id ? null : expense.id)}
+                  onClick={(e) => {
+                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                    if (actionMenuOpen === expense.id) {
+                      setActionMenuOpen(null);
+                      setActionMenuPosition(null);
+                    } else {
+                      setActionMenuOpen(expense.id);
+                      setActionMenuPosition({ x: rect.right, y: rect.bottom });
+                    }
+                  }}
                   className="p-1 rounded hover:bg-gray-200"
                   aria-label="Open action menu"
                 >
                   ⋮
                 </button>
-                {actionMenuOpen === expense.id && (
-                  <div ref={actionMenuRef} className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
+                {actionMenuOpen === expense.id && actionMenuPosition && (
+                  <div
+                    ref={actionMenuRef}
+                    style={{
+                      position: 'fixed',
+                      top: actionMenuPosition.y,
+                      left: actionMenuPosition.x,
+                      zIndex: 9999,
+                    }}
+                    className="w-40 bg-white border border-blue-300 rounded-lg shadow-2xl ring-2 ring-blue-200/40 backdrop-blur-sm"
+                  >
                     <button
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                      className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-blue-50 transition-colors duration-150 font-medium text-blue-700"
                       onClick={() => {
                         onEdit(expense);
                         setActionMenuOpen(null);
+                        setActionMenuPosition(null);
                       }}
                     >
+                      <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M15.232 5.232l3.536 3.536M9 13l6-6m2 2l-6 6m-2 2h6v2H7v-2z" />
+                      </svg>
                       แก้ไข
                     </button>
                     <button
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
+                      className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-red-50 transition-colors duration-150 font-medium text-red-600"
                       onClick={() => {
                         setActionMenuOpen(null);
+                        setActionMenuPosition(null);
                         onDelete(expense);
                       }}
                     >
+                      <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                       ลบ
                     </button>
                   </div>
