@@ -79,6 +79,7 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
   });
 
   const watchExpenseItems = watch('expenseItems');
+  const watchDate = watch('date');
 
   // Calculate total amount whenever expense items change
   React.useEffect(() => {
@@ -93,6 +94,27 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
       setValue(`expenseItems.${index}.amount`, amount);
     });
   }, [watchExpenseItems, setValue]);
+
+  // ดึงเลขที่เอกสารล่าสุดเมื่อ modal เปิดหรือวันที่เปลี่ยน
+  React.useEffect(() => {
+    if (open && watchDate) {
+      expenseService.getLatestDocumentNumber(watchDate).then((latestNumber) => {
+        if (latestNumber) {
+          const parts = latestNumber.split('-');
+          const lastNumber = parseInt(parts[parts.length - 1]);
+          const newNumber = String(lastNumber + 1).padStart(4, '0');
+          parts[parts.length - 1] = newNumber;
+          setValue('documentNumber', parts.join('-'));
+        } else {
+          const date = new Date(watchDate);
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          setValue('documentNumber', `EXP-${year}-${month}-${day}-0001`);
+        }
+      });
+    }
+  }, [open, watchDate, setValue]);
 
   const onSubmit = async (data: ExpenseFormData) => {
     try {
@@ -147,6 +169,7 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
                 id="documentNumber"
                 {...register('documentNumber')}
                 className="w-full border rounded px-2 py-1"
+                disabled={true}
               />
               {errors.documentNumber && (
                 <p className="text-red-500 text-sm mt-1">{errors.documentNumber.message}</p>
