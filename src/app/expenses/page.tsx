@@ -26,6 +26,36 @@ function CreateExpenseModal({ open, onClose, onCreated }: { open: boolean, onClo
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    async function fetchAndSetDocumentNumber() {
+      if (!open) return;
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      try {
+        const latestDocNum = await expenseService.getLatestDocumentNumber(dateStr);
+        let running = 1;
+        if (latestDocNum) {
+          // สมมติรูปแบบ EXP-YYYY-MM-DD-xxxx
+          const parts = latestDocNum.split('-');
+          const lastRun = parts[4] || parts[3]; // รองรับกรณี format เดิม/ใหม่
+          if (lastRun && !isNaN(Number(lastRun))) {
+            running = Number(lastRun) + 1;
+          }
+        }
+        const newDocNum = `EXP-${year}-${month}-${day}-${String(running).padStart(4, '0')}`;
+        setForm((prev) => ({ ...prev, documentNumber: newDocNum, date: dateStr }));
+      } catch (e) {
+        // fallback ถ้า error
+        setForm((prev) => ({ ...prev, documentNumber: `EXP-${year}-${month}-${day}-0001`, date: dateStr }));
+      }
+    }
+    fetchAndSetDocumentNumber();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     let fieldValue: any = value;

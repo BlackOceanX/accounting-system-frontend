@@ -122,5 +122,19 @@ export const expenseService = {
       }
       throw error;
     }
+  },
+
+  async getLatestDocumentNumber(date: string): Promise<string | null> {
+    try {
+      const response = await api.get('/Expenses/LatestDocumentNumber', {
+        params: { date }
+      });
+      return response.data?.documentNumber || null;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        throw new Error(error.response?.data?.message || 'Failed to fetch latest document number');
+      }
+      throw error;
+    }
   }
 }; 
