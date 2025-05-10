@@ -83,57 +83,57 @@ function CreateExpenseModal({ open, onClose, onCreated }: { open: boolean, onClo
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 relative">
         <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-600" onClick={onClose}>&times;</button>
-        <h2 className="text-xl font-bold mb-4 text-blue-700">Create Expense</h2>
+        <h2 className="text-xl font-bold mb-4 text-blue-700">สร้างค่าใช้จ่าย</h2>
         {error && <div className="text-red-600 mb-2">{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium">Document No.</label>
+              <label className="block text-sm font-medium">เลขที่เอกสาร</label>
               <input name="documentNumber" value={form.documentNumber} onChange={handleChange} className="w-full border rounded px-2 py-1" />
             </div>
             <div>
-              <label className="block text-sm font-medium">Date</label>
+              <label className="block text-sm font-medium">วันที่</label>
               <input type="date" name="date" value={form.date} onChange={handleChange} className="w-full border rounded px-2 py-1" />
             </div>
             <div>
-              <label className="block text-sm font-medium">Vendor Name</label>
+              <label className="block text-sm font-medium">ผู้จัดจำหน่าย</label>
               <input name="vendorName" value={form.vendorName} onChange={handleChange} className="w-full border rounded px-2 py-1" />
             </div>
             <div>
-              <label className="block text-sm font-medium">Credit Term (days)</label>
+              <label className="block text-sm font-medium">ระยะเวลาชำระ</label>
               <input type="number" name="creditTerm" value={form.creditTerm} onChange={handleChange} className="w-full border rounded px-2 py-1" />
             </div>
             <div>
-              <label className="block text-sm font-medium">Due Date</label>
+              <label className="block text-sm font-medium">วันที่ครบกำหนด</label>
               <input type="date" name="dueDate" value={form.dueDate} onChange={handleChange} className="w-full border rounded px-2 py-1" />
             </div>
             <div>
-              <label className="block text-sm font-medium">Currency</label>
+              <label className="block text-sm font-medium">สกุลเงิน</label>
               <select name="currency" value={form.currency} onChange={handleChange} className="w-full border rounded px-2 py-1">
                 <option value="THB">THB</option>
                 <option value="USD">USD</option>
               </select>
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium">Remark</label>
+              <label className="block text-sm font-medium">หมายเหตุ</label>
               <input name="remark" value={form.remark} onChange={handleChange} className="w-full border rounded px-2 py-1" />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Expense Items</label>
+            <label className="block text-sm font-medium mb-2">รายการค่าใช้จ่าย</label>
             <div className="space-y-2">
               {form.expenseItems.map((item, idx) => (
                 <div key={idx} className="grid grid-cols-6 gap-2 items-center">
-                  <input placeholder="Description" value={item.description} onChange={e => handleItemChange(idx, 'description', e.target.value)} className="col-span-2 border rounded px-2 py-1" />
-                  <input placeholder="Category" value={item.category} onChange={e => handleItemChange(idx, 'category', e.target.value)} className="col-span-1 border rounded px-2 py-1" />
-                  <input type="number" placeholder="Qty" value={item.quantity} onChange={e => handleItemChange(idx, 'quantity', e.target.value)} className="col-span-1 border rounded px-2 py-1" />
-                  <input placeholder="Unit" value={item.unit} onChange={e => handleItemChange(idx, 'unit', e.target.value)} className="col-span-1 border rounded px-2 py-1" />
-                  <input type="number" placeholder="Unit Price" value={item.unitPrice} onChange={e => handleItemChange(idx, 'unitPrice', e.target.value)} className="col-span-1 border rounded px-2 py-1" />
+                  <input placeholder="รายละเอียด" value={item.description} onChange={e => handleItemChange(idx, 'description', e.target.value)} className="col-span-2 border rounded px-2 py-1" />
+                  <input placeholder="หมวดหมู่" value={item.category} onChange={e => handleItemChange(idx, 'category', e.target.value)} className="col-span-1 border rounded px-2 py-1" />
+                  <input type="number" placeholder="จำนวน" value={item.quantity} onChange={e => handleItemChange(idx, 'quantity', e.target.value)} className="col-span-1 border rounded px-2 py-1" />
+                  <input placeholder="หน่วย" value={item.unit} onChange={e => handleItemChange(idx, 'unit', e.target.value)} className="col-span-1 border rounded px-2 py-1" />
+                  <input type="number" placeholder="ราคาต่อหน่วย" value={item.unitPrice} onChange={e => handleItemChange(idx, 'unitPrice', e.target.value)} className="col-span-1 border rounded px-2 py-1" />
                   <span className="col-span-1">{item.amount.toFixed(2)}</span>
                   <button type="button" className="text-red-500 ml-2" onClick={() => handleRemoveItem(idx)} disabled={form.expenseItems.length === 1}>-</button>
                 </div>
               ))}
-              <button type="button" className="text-blue-600 mt-2" onClick={handleAddItem}>+ Add Item</button>
+              <button type="button" className="text-blue-600 mt-2" onClick={handleAddItem}>+ เพิ่มรายการ</button>
             </div>
           </div>
           <div className="flex justify-end gap-2">
@@ -181,12 +181,12 @@ export default function ExpensesPage() {
       {/* Header and Actions */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-blue-700">Expenses</h1>
-          <div className="text-sm text-gray-500 mt-1">Expenses &gt; All Expenses</div>
+          <h1 className="text-2xl font-bold text-blue-700">ค่าใช้จ่าย</h1>
+          <div className="text-sm text-gray-500 mt-1">ค่าใช้จ่าย &gt; ค่าใช้จ่ายทั้งหมด</div>
         </div>
         <div className="flex gap-2">
-          <button className="bg-white border border-blue-600 text-blue-600 px-4 py-2 rounded hover:bg-blue-50 transition">Scan Bill & Receipt</button>
-          <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition" onClick={() => setShowCreateModal(true)}>Create New</button>
+          <button className="bg-white border border-blue-600 text-blue-600 px-4 py-2 rounded hover:bg-blue-50 transition">สแกนใบเสร็จ & ใบเสร็จรับเงิน</button>
+          <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition" onClick={() => setShowCreateModal(true)}>สร้างใหม่</button>
         </div>
       </div>
       <CreateExpenseModal open={showCreateModal} onClose={() => setShowCreateModal(false)} onCreated={fetchExpenses} />
@@ -214,12 +214,12 @@ export default function ExpensesPage() {
                   <th className="px-4 py-2 text-left font-semibold">
                     <input type="checkbox" className="accent-blue-600" />
                   </th>
-                  <th className="px-4 py-2 text-left font-semibold">Date</th>
-                  <th className="px-4 py-2 text-left font-semibold">Document No.</th>
-                  <th className="px-4 py-2 text-left font-semibold">Vendor Name</th>
-                  <th className="px-4 py-2 text-left font-semibold">Category</th>
-                  <th className="px-4 py-2 text-left font-semibold">Amount</th>
-                  <th className="px-4 py-2 text-left font-semibold">Status</th>
+                  <th className="px-4 py-2 text-left font-semibold">วันที่</th>
+                  <th className="px-4 py-2 text-left font-semibold">เลขที่เอกสาร</th>
+                  <th className="px-4 py-2 text-left font-semibold">ผู้จัดจำหน่าย</th>
+                  <th className="px-4 py-2 text-left font-semibold">หมวดหมู่</th>
+                  <th className="px-4 py-2 text-left font-semibold">จำนวนเงิน</th>
+                  <th className="px-4 py-2 text-left font-semibold">สถานะ</th>
                 </tr>
               </thead>
               <tbody>
@@ -257,7 +257,7 @@ export default function ExpensesPage() {
             <svg width="64" height="64" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="mb-4">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-7 8h6a2 2 0 002-2V6a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <div className="text-lg">Click here to create your first expense document</div>
+            <div className="text-lg">คลิกที่นี่เพื่อสร้างเอกสารค่าใช้จ่ายแรก</div>
           </div>
         )}
       </div>
@@ -271,7 +271,7 @@ export default function ExpensesPage() {
             <option>100</option>
           </select>
         </div>
-        <div className="text-blue-600 cursor-pointer">Show All Totals</div>
+        <div className="text-blue-600 cursor-pointer">แสดงทั้งหมด</div>
       </div>
     </div>
   );
