@@ -1,512 +1,157 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
-import { expenseService, Expense } from "@/services/expenseService";
-
-function CreateExpenseModal({ open, onClose, onCreated }: { open: boolean, onClose: () => void, onCreated: () => void }) {
-  const [form, setForm] = useState({
-    documentNumber: '',
-    vendorName: '',
-    vendorDetail: '',
-    project: '',
-    referenceNumber: '',
-    date: new Date().toISOString().slice(0, 10),
-    creditTerm: 0,
-    dueDate: new Date().toISOString().slice(0, 10),
-    currency: 'THB',
-    discount: 0,
-    vatIncluded: false,
-    remark: '',
-    internalNote: '',
-    totalAmount: 0,
-    expenseItems: [
-      { description: '', category: '', quantity: 1, unit: '', unitPrice: 0, amount: 0 }
-    ]
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchAndSetDocumentNumber() {
-      if (!open) return;
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, '0');
-      const day = String(today.getDate()).padStart(2, '0');
-      const dateStr = `${year}-${month}-${day}`;
-      try {
-        const latestDocNum = await expenseService.getLatestDocumentNumber(dateStr);
-        console.log('latestDocNum', latestDocNum);
-        let running = 1;
-        if (latestDocNum) {
-          // Format: EXP-YYYY-MM-DD-xxxx
-          const parts = latestDocNum.split('-');
-          if (parts.length === 5 && parts[0] === 'EXP') {
-            const lastRun = parts[4];
-            if (lastRun && !isNaN(Number(lastRun))) {
-              running = Number(lastRun) + 1;
-            }
-          }
-        }
-        const newDocNum = `EXP-${year}-${month}-${day}-${String(running).padStart(4, '0')}`;
-        setForm((prev) => ({ ...prev, documentNumber: newDocNum, date: dateStr }));
-      } catch (e) {
-        console.error('Error fetching latest document number:', e);
-        // fallback ถ้า error
-        setForm((prev) => ({ ...prev, documentNumber: `EXP-${year}-${month}-${day}-0001`, date: dateStr }));
-      }
-    }
-    fetchAndSetDocumentNumber();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    let fieldValue: any = value;
-    if (type === 'checkbox' && e.target instanceof HTMLInputElement) {
-      fieldValue = e.target.checked;
-    }
-    setForm((prev) => ({
-      ...prev,
-      [name]: fieldValue
-    }));
-  };
-
-  const handleItemChange = (idx: number, field: string, value: any) => {
-    setForm((prev) => {
-      const items = [...prev.expenseItems];
-      items[idx] = { ...items[idx], [field]: value };
-      // recalculate amount
-      items[idx].amount = (Number(items[idx].quantity) || 0) * (Number(items[idx].unitPrice) || 0);
-      return { ...prev, expenseItems: items };
-    });
-  };
-
-  const handleAddItem = () => {
-    setForm((prev) => ({
-      ...prev,
-      expenseItems: [...prev.expenseItems, { description: '', category: '', quantity: 1, unit: '', unitPrice: 0, amount: 0 }]
-    }));
-  };
-
-  const handleRemoveItem = (idx: number) => {
-    setForm((prev) => {
-      const items = prev.expenseItems.filter((_, i) => i !== idx);
-      return { ...prev, expenseItems: items };
-    });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      const payload = { ...form, totalAmount: form.expenseItems.reduce((sum, i) => sum + (Number(i.amount) || 0), 0) };
-      await expenseService.createExpense(payload as any);
-      onCreated();
-      onClose();
-    } catch (err: any) {
-      setError(err.message || 'Failed to create expense');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (!open) return null;
-  return (
-    <main className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <section className="bg-white rounded-lg shadow-lg w-full max-w-6xl p-6 relative">
-        <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-600" onClick={onClose}>&times;</button>
-        <h2 className="text-xl font-bold mb-4 text-blue-700">สร้างค่าใช้จ่าย</h2>
-        {error && <p className="text-red-600 mb-2">{error}</p>}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium">เลขที่เอกสาร</label>
-              <input name="documentNumber" value={form.documentNumber} onChange={handleChange} className="w-full border rounded px-2 py-1" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">วันที่</label>
-              <input type="date" name="date" value={form.date} onChange={handleChange} className="w-full border rounded px-2 py-1" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">ผู้จัดจำหน่าย</label>
-              <input name="vendorName" value={form.vendorName} onChange={handleChange} className="w-full border rounded px-2 py-1" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">ระยะเวลาชำระ</label>
-              <input type="number" name="creditTerm" value={form.creditTerm} onChange={handleChange} className="w-full border rounded px-2 py-1" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">วันที่ครบกำหนด</label>
-              <input type="date" name="dueDate" value={form.dueDate} onChange={handleChange} className="w-full border rounded px-2 py-1" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">สกุลเงิน</label>
-              <select name="currency" value={form.currency} onChange={handleChange} className="w-full border rounded px-2 py-1">
-                <option value="THB">THB</option>
-                <option value="USD">USD</option>
-              </select>
-            </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-medium">หมายเหตุ</label>
-              <input name="remark" value={form.remark} onChange={handleChange} className="w-full border rounded px-2 py-1" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">รายการค่าใช้จ่าย</label>
-            <div className="overflow-x-auto">
-              <table className="min-w-full border rounded">
-                <thead>
-                  <tr className="bg-blue-400 text-white">
-                    <th className="px-2 py-1">ลำดับ</th>
-                    <th className="px-2 py-1">รายละเอียด</th>
-                    <th className="px-2 py-1">หมวดหมู่</th>
-                    <th className="px-2 py-1">จำนวน</th>
-                    <th className="px-2 py-1">หน่วย</th>
-                    <th className="px-2 py-1">ราคาต่อหน่วย</th>
-                    <th className="px-2 py-1">ราคารวม</th>
-                    <th className="px-2 py-1"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {form.expenseItems.map((item, idx) => (
-                    <tr key={idx} className="border-b">
-                      <td className="px-2 py-1 text-center">{idx + 1}</td>
-                      <td className="px-2 py-1">
-                        <input
-                          placeholder="รายละเอียด"
-                          value={item.description}
-                          onChange={e => handleItemChange(idx, 'description', e.target.value)}
-                          className="w-full border rounded px-2 py-1"
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <input
-                          placeholder="หมวดหมู่"
-                          value={item.category}
-                          onChange={e => handleItemChange(idx, 'category', e.target.value)}
-                          className="w-full border rounded px-2 py-1"
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <input
-                          type="number"
-                          placeholder="จำนวน"
-                          value={item.quantity}
-                          onChange={e => handleItemChange(idx, 'quantity', e.target.value)}
-                          className="w-full border rounded px-2 py-1 text-right"
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <input
-                          placeholder="หน่วย"
-                          value={item.unit}
-                          onChange={e => handleItemChange(idx, 'unit', e.target.value)}
-                          className="w-full border rounded px-2 py-1"
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <input
-                          type="number"
-                          placeholder="ราคาต่อหน่วย"
-                          value={item.unitPrice}
-                          onChange={e => handleItemChange(idx, 'unitPrice', e.target.value)}
-                          className="w-full border rounded px-2 py-1 text-right"
-                        />
-                      </td>
-                      <td className="px-2 py-1 text-right">{item.amount.toFixed(2)}</td>
-                      <td className="px-2 py-1 text-center">
-                        {form.expenseItems.length > 1 && (
-                          <button
-                            type="button"
-                            className="text-red-500"
-                            onClick={() => handleRemoveItem(idx)}
-                          >
-                            ลบ
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <button
-                type="button"
-                className="mt-2 px-3 py-1 border border-blue-500 text-blue-600 rounded hover:bg-blue-50"
-                onClick={handleAddItem}
-              >
-                + เพิ่มแถวรายการ
-              </button>
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <button type="button" className="px-4 py-2 bg-gray-200 rounded" onClick={onClose}>Cancel</button>
-            <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded" disabled={loading}>{loading ? 'Saving...' : 'Save'}</button>
-          </div>
-        </form>
-      </section>
-    </main>
-  );
-}
+import React, { useState, useEffect } from 'react';
+import { CreateExpenseModal } from './components/CreateExpenseModal';
+import { ExpenseList } from './components/ExpenseList';
+import { ExpenseSearch } from './components/ExpenseSearch';
+import { ExpensePagination } from './components/ExpensePagination';
+import { EmptyState } from './components/EmptyState';
+import { expenseService, Expense } from '@/services/expenseService';
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [actionMenuOpen, setActionMenuOpen] = useState<number | null>(null);
-  const [editExpense, setEditExpense] = useState<Expense | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const actionMenuRef = useRef<HTMLDivElement | null>(null);
 
   const fetchExpenses = async () => {
     try {
-      const data = await expenseService.getAllExpenses(pageNumber, pageSize);
-      setExpenses(data.items);
-      setTotalCount(data.totalCount);
-      setTotalPages(data.totalPages);
+      setIsLoading(true);
       setError(null);
+      const response = await expenseService.getAllExpenses();
+      setExpenses(response.items);
+      setFilteredExpenses(response.items);
+      setTotalCount(response.totalCount);
+      setTotalPages(response.totalPages);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
-      setError(errorMessage);
+      setError('เกิดข้อผิดพลาดในการโหลดข้อมูล');
       console.error('Error fetching expenses:', err);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchExpenses();
-  }, [pageNumber, pageSize]);
+  }, []);
 
   useEffect(() => {
-    if (!search) {
-      setFilteredExpenses(expenses);
-    } else {
-      const lower = search.toLowerCase();
-      setFilteredExpenses(
-        expenses.filter(e =>
-          (e.documentNumber || "").toLowerCase().includes(lower) ||
-          (e.vendorName || "").toLowerCase().includes(lower) ||
-          (e.expenseItems?.[0]?.category || "").toLowerCase().includes(lower) ||
-          (e.remark || "").toLowerCase().includes(lower)
-        )
-      );
-    }
-  }, [search, expenses]);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
-        setActionMenuOpen(null);
-      }
-    }
-    if (actionMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [actionMenuOpen]);
+    const filtered = expenses.filter(expense => 
+      (expense.documentNumber || '').toLowerCase().includes(search.toLowerCase()) ||
+      (expense.vendorName || '').toLowerCase().includes(search.toLowerCase())
+    );
+    setFilteredExpenses(filtered);
+    setTotalCount(filtered.length);
+    setTotalPages(Math.ceil(filtered.length / pageSize));
+    setPageNumber(1);
+  }, [search, expenses, pageSize]);
 
   const handleRetry = () => {
-    setLoading(true);
-    setError(null);
     fetchExpenses();
   };
 
+  const handleDelete = async (expense: Expense) => {
+    if (window.confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')) {
+      try {
+        await expenseService.deleteExpense(expense.id);
+        await fetchExpenses();
+      } catch (err) {
+        console.error('Error deleting expense:', err);
+        alert('เกิดข้อผิดพลาดในการลบรายการ');
+      }
+    }
+  };
+
+  const handleEdit = (expense: Expense) => {
+    // TODO: Implement edit functionality
+    console.log('Edit expense:', expense);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPageNumber(newPage);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPageNumber(1);
+  };
+
+  const paginatedExpenses = filteredExpenses.slice(
+    (pageNumber - 1) * pageSize,
+    pageNumber * pageSize
+  );
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Header and Actions */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-blue-700">ค่าใช้จ่าย</h1>
-          <div className="text-sm text-gray-500 mt-1">ค่าใช้จ่าย &gt; ค่าใช้จ่ายทั้งหมด</div>
-        </div>
-        <div className="flex gap-2 items-center">
-          {/* Search UI */}
-          <div className="relative">
-            <input
-              type="text"
-              className="border rounded px-3 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-blue-300"
-              placeholder="ค้นหา..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Escape') setSearch(''); }}
-            />
-            <button
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-600"
-              onClick={() => setSearch("")}
-              title="ล้างการค้นหา"
-              style={{ display: search ? 'block' : 'none' }}
-              type="button"
-            >
-              ×
-            </button>
-          </div>
-          <button className="bg-white border border-blue-600 text-blue-600 px-4 py-2 rounded hover:bg-blue-50 transition">สแกนใบเสร็จ & ใบเสร็จรับเงิน</button>
-          <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition" onClick={() => setShowCreateModal(true)}>สร้างใหม่</button>
-        </div>
+    <div className="flex-1 flex flex-col">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900">รายการค่าใช้จ่าย</h1>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          เพิ่มรายการใหม่
+        </button>
       </div>
-      <CreateExpenseModal open={showCreateModal} onClose={() => setShowCreateModal(false)} onCreated={fetchExpenses} />
-      {/* Table */}
-      <div className="bg-white rounded shadow p-4 flex-1 flex flex-col">
-        {loading ? (
+
+      <div className="flex-1 flex flex-col bg-white rounded-lg shadow">
+        <div className="p-6 border-b border-gray-200">
+          <ExpenseSearch
+            search={search}
+            onSearchChange={setSearch}
+          />
+        </div>
+
+        {isLoading ? (
           <div className="flex-1 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         ) : error ? (
           <div className="flex-1 flex flex-col items-center justify-center text-red-600">
             <p className="mb-4">{error}</p>
-            <button 
+            <button
               onClick={handleRetry}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
-              Retry
+              ลองใหม่
             </button>
           </div>
+        ) : filteredExpenses.length === 0 ? (
+          <EmptyState />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr className="bg-blue-100 text-blue-700">
-                  <th className="px-4 py-2 text-left font-semibold">
-                    <input type="checkbox" className="accent-blue-600" />
-                  </th>
-                  <th className="px-4 py-2 text-left font-semibold">วันที่</th>
-                  <th className="px-4 py-2 text-left font-semibold">เลขที่เอกสาร</th>
-                  <th className="px-4 py-2 text-left font-semibold">ผู้จัดจำหน่าย</th>
-                  <th className="px-4 py-2 text-left font-semibold">หมวดหมู่</th>
-                  <th className="px-4 py-2 text-left font-semibold">จำนวนเงิน</th>
-                  <th className="px-4 py-2 text-left font-semibold">สถานะ</th>
-                  <th className="px-4 py-2 text-left font-semibold">การดำเนินการ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(search ? filteredExpenses : expenses).map((expense) => (
-                  <tr key={expense.id} className="border-b hover:bg-gray-50 relative">
-                    <td className="px-4 py-3">
-                      <input type="checkbox" className="accent-blue-600" />
-                    </td>
-                    <td className="px-4 py-3">{new Date(expense.date).toLocaleDateString()}</td>
-                    <td className="px-4 py-3">{expense.documentNumber}</td>
-                    <td className="px-4 py-3">{expense.vendorName}</td>
-                    <td className="px-4 py-3">
-                      {expense.expenseItems?.[0]?.category || 'N/A'}
-                    </td>
-                    <td className="px-4 py-3">
-                      {expense.currency} {expense.totalAmount.toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        new Date(expense.dueDate) > new Date()
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {new Date(expense.dueDate) > new Date() ? 'Active' : 'Overdue'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 relative">
-                      <button
-                        onClick={() => setActionMenuOpen(actionMenuOpen === expense.id ? null : expense.id)}
-                        className="p-1 rounded hover:bg-gray-200"
-                      >
-                        ⋮
-                      </button>
-                      {actionMenuOpen === expense.id && (
-                        <div ref={actionMenuRef} className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
-                          <button
-                            className="block w-full text-left px-4 py-2 hover:bg-gray-100"
-                            onClick={() => {
-                              setEditExpense(expense);
-                              setActionMenuOpen(null);
-                            }}
-                          >
-                            แก้ไข
-                          </button>
-                          <button
-                            className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
-                            onClick={async () => {
-                              setActionMenuOpen(null);
-                              if (window.confirm("ยืนยันการลบรายการนี้?")) {
-                                try {
-                                  await expenseService.deleteExpense(expense.id);
-                                  fetchExpenses();
-                                } catch (err) {
-                                  alert("เกิดข้อผิดพลาดในการลบ");
-                                }
-                              }
-                            }}
-                          >
-                            ลบ
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {!loading && !error && (search ? filteredExpenses.length === 0 : expenses.length === 0) && (
-          <div className="flex-1 flex flex-col items-center justify-center text-gray-400 mt-8">
-            <svg width="64" height="64" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="mb-4">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-7 8h6a2 2 0 002-2V6a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <div className="text-lg">ไม่พบข้อมูลรายการค่าใช้จ่าย</div>
-          </div>
+          <>
+            <ExpenseList
+              expenses={paginatedExpenses}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+            <div className="p-6 border-t border-gray-200">
+              <ExpensePagination
+                pageNumber={pageNumber}
+                pageSize={pageSize}
+                totalCount={totalCount}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+              />
+            </div>
+          </>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
-        <div>
-          Items per page
-          <select 
-            className="ml-2 border rounded px-2 py-1"
-            value={pageSize}
-            onChange={(e) => {
-              setPageSize(Number(e.target.value));
-              setPageNumber(1); // Reset to first page when changing page size
-            }}
-          >
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-          </select>
-        </div>
-        <div className="flex items-center gap-4">
-          <div>
-            Showing {((pageNumber - 1) * pageSize) + 1} to {Math.min(pageNumber * pageSize, totalCount)} of {totalCount} items
-          </div>
-          <div className="flex gap-2">
-            <button
-              className="px-2 py-1 border rounded disabled:opacity-50"
-              onClick={() => setPageNumber(prev => Math.max(1, prev - 1))}
-              disabled={pageNumber === 1}
-            >
-              Previous
-            </button>
-            <button
-              className="px-2 py-1 border rounded disabled:opacity-50"
-              onClick={() => setPageNumber(prev => Math.min(totalPages, prev + 1))}
-              disabled={pageNumber === totalPages}
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      </div>
+      <CreateExpenseModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onCreated={() => {
+          setIsModalOpen(false);
+          fetchExpenses();
+        }}
+      />
     </div>
   );
 } 
