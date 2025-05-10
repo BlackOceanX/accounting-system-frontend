@@ -43,16 +43,16 @@ export function DashboardCard({ card }: DashboardCardProps) {
   const [selected, setSelected] = useState(card.filter[0]);
 
   return (
-    <div className="bg-white rounded-xl shadow p-6 flex flex-col gap-4 min-h-[320px]">
+    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-6 flex flex-col gap-4 min-h-[320px] border border-gray-100">
       <div className="flex items-center justify-between">
-        <div className="font-semibold text-lg flex gap-2 items-center">
+        <div className="font-semibold text-lg flex gap-2 items-center text-gray-800">
           {card.title}
           {card.link && (
-            <a href="#" className="text-sky-600 text-xs underline ml-2 whitespace-nowrap">{card.link}</a>
+            <a href="#" className="text-sky-600 text-xs hover:text-sky-700 transition-colors duration-200 underline ml-2 whitespace-nowrap">{card.link}</a>
           )}
         </div>
         <select
-          className="border rounded px-2 py-1 text-sm"
+          className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white hover:border-gray-300 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none transition-all duration-200"
           value={selected}
           onChange={e => setSelected(e.target.value)}
         >
@@ -63,10 +63,10 @@ export function DashboardCard({ card }: DashboardCardProps) {
       </div>
       <div className="flex-1 flex flex-col items-center justify-center gap-2">
         {/* Value summary */}
-        <div className="flex gap-4 text-base font-medium">
-          <span>{card.valueLabel} <span className="text-sky-600">{card.value}</span></span>
+        <div className="flex gap-6 text-base font-medium">
+          <span className="text-gray-600">{card.valueLabel} <span className="text-sky-600 font-semibold">{card.value}</span></span>
           {card.valueLabel2 && (
-            <span>{card.valueLabel2} <span className="text-gray-700">{card.value2}</span></span>
+            <span className="text-gray-600">{card.valueLabel2} <span className="text-gray-700 font-semibold">{card.value2}</span></span>
           )}
         </div>
         {/* Chart or Placeholder */}
@@ -83,19 +83,19 @@ export function DashboardCard({ card }: DashboardCardProps) {
         {/* Doc list for ยอดค้างจ่าย */}
         {card.docList && (
           <div className="w-full mt-2">
-            <div className="flex justify-between text-xs text-gray-500 border-b pb-1 mb-1">
+            <div className="flex justify-between text-xs text-gray-500 border-b pb-2 mb-2">
               <span>เอกสาร</span>
               <span>สถานะ</span>
             </div>
             {card.docList.map((doc) => (
-              <div key={doc.code} className="flex justify-between items-center py-1 text-sm">
+              <div key={doc.code} className="flex justify-between items-center py-2 text-sm hover:bg-gray-50 rounded-lg px-2 transition-colors duration-200">
                 <div>
-                  <div>{doc.name}</div>
+                  <div className="font-medium text-gray-800">{doc.name}</div>
                   <div className="text-xs text-gray-400">{doc.code} ครบกำหนด {doc.due}</div>
                 </div>
                 <div className="flex flex-col items-end">
-                  <span>{doc.amount}</span>
-                  <span className="text-xs bg-pink-100 text-pink-600 rounded px-2 py-0.5 mt-1">{doc.status}</span>
+                  <span className="font-medium text-gray-800">{doc.amount}</span>
+                  <span className="text-xs bg-pink-100 text-pink-600 rounded-full px-3 py-1 mt-1">{doc.status}</span>
                 </div>
               </div>
             ))}
@@ -109,7 +109,7 @@ export function DashboardCard({ card }: DashboardCardProps) {
         )}
         {/* Button */}
         {card.button && !card.docList && (
-          <button className="mt-2 px-4 py-1 border border-sky-400 text-sky-600 rounded hover:bg-sky-50 text-sm">
+          <button className="mt-2 px-4 py-2 border border-sky-400 text-sky-600 rounded-lg hover:bg-sky-50 hover:border-sky-500 transition-all duration-200 text-sm font-medium">
             {card.button}
           </button>
         )}
