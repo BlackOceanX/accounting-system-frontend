@@ -126,10 +126,10 @@ export const expenseService = {
 
   async getLatestDocumentNumber(date: string): Promise<string | null> {
     try {
-      const response = await api.get('/Expenses/LatestDocumentNumber', {
+      const response = await api.get('/Expenses/latest-document-number', {
         params: { date }
       });
-      return response.data?.documentNumber || null;
+      return response.data || null;
     } catch (error) {
       if (error instanceof AxiosError) {
         throw new Error(error.response?.data?.message || 'Failed to fetch latest document number');

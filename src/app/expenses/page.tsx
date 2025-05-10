@@ -36,18 +36,22 @@ function CreateExpenseModal({ open, onClose, onCreated }: { open: boolean, onClo
       const dateStr = `${year}-${month}-${day}`;
       try {
         const latestDocNum = await expenseService.getLatestDocumentNumber(dateStr);
+        console.log('latestDocNum', latestDocNum);
         let running = 1;
         if (latestDocNum) {
-          // สมมติรูปแบบ EXP-YYYY-MM-DD-xxxx
+          // Format: EXP-YYYY-MM-DD-xxxx
           const parts = latestDocNum.split('-');
-          const lastRun = parts[4] || parts[3]; // รองรับกรณี format เดิม/ใหม่
-          if (lastRun && !isNaN(Number(lastRun))) {
-            running = Number(lastRun) + 1;
+          if (parts.length === 5 && parts[0] === 'EXP') {
+            const lastRun = parts[4];
+            if (lastRun && !isNaN(Number(lastRun))) {
+              running = Number(lastRun) + 1;
+            }
           }
         }
         const newDocNum = `EXP-${year}-${month}-${day}-${String(running).padStart(4, '0')}`;
         setForm((prev) => ({ ...prev, documentNumber: newDocNum, date: dateStr }));
       } catch (e) {
+        console.error('Error fetching latest document number:', e);
         // fallback ถ้า error
         setForm((prev) => ({ ...prev, documentNumber: `EXP-${year}-${month}-${day}-0001`, date: dateStr }));
       }
@@ -110,11 +114,11 @@ function CreateExpenseModal({ open, onClose, onCreated }: { open: boolean, onClo
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 relative">
+    <main className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+      <section className="bg-white rounded-lg shadow-lg w-full max-w-6xl p-6 relative">
         <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-600" onClick={onClose}>&times;</button>
         <h2 className="text-xl font-bold mb-4 text-blue-700">สร้างค่าใช้จ่าย</h2>
-        {error && <div className="text-red-600 mb-2">{error}</div>}
+        {error && <p className="text-red-600 mb-2">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -151,19 +155,89 @@ function CreateExpenseModal({ open, onClose, onCreated }: { open: boolean, onClo
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">รายการค่าใช้จ่าย</label>
-            <div className="space-y-2">
-              {form.expenseItems.map((item, idx) => (
-                <div key={idx} className="grid grid-cols-6 gap-2 items-center">
-                  <input placeholder="รายละเอียด" value={item.description} onChange={e => handleItemChange(idx, 'description', e.target.value)} className="col-span-2 border rounded px-2 py-1" />
-                  <input placeholder="หมวดหมู่" value={item.category} onChange={e => handleItemChange(idx, 'category', e.target.value)} className="col-span-1 border rounded px-2 py-1" />
-                  <input type="number" placeholder="จำนวน" value={item.quantity} onChange={e => handleItemChange(idx, 'quantity', e.target.value)} className="col-span-1 border rounded px-2 py-1" />
-                  <input placeholder="หน่วย" value={item.unit} onChange={e => handleItemChange(idx, 'unit', e.target.value)} className="col-span-1 border rounded px-2 py-1" />
-                  <input type="number" placeholder="ราคาต่อหน่วย" value={item.unitPrice} onChange={e => handleItemChange(idx, 'unitPrice', e.target.value)} className="col-span-1 border rounded px-2 py-1" />
-                  <span className="col-span-1">{item.amount.toFixed(2)}</span>
-                  <button type="button" className="text-red-500 ml-2" onClick={() => handleRemoveItem(idx)} disabled={form.expenseItems.length === 1}>-</button>
-                </div>
-              ))}
-              <button type="button" className="text-blue-600 mt-2" onClick={handleAddItem}>+ เพิ่มรายการ</button>
+            <div className="overflow-x-auto">
+              <table className="min-w-full border rounded">
+                <thead>
+                  <tr className="bg-blue-400 text-white">
+                    <th className="px-2 py-1">ลำดับ</th>
+                    <th className="px-2 py-1">รายละเอียด</th>
+                    <th className="px-2 py-1">หมวดหมู่</th>
+                    <th className="px-2 py-1">จำนวน</th>
+                    <th className="px-2 py-1">หน่วย</th>
+                    <th className="px-2 py-1">ราคาต่อหน่วย</th>
+                    <th className="px-2 py-1">ราคารวม</th>
+                    <th className="px-2 py-1"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {form.expenseItems.map((item, idx) => (
+                    <tr key={idx} className="border-b">
+                      <td className="px-2 py-1 text-center">{idx + 1}</td>
+                      <td className="px-2 py-1">
+                        <input
+                          placeholder="รายละเอียด"
+                          value={item.description}
+                          onChange={e => handleItemChange(idx, 'description', e.target.value)}
+                          className="w-full border rounded px-2 py-1"
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <input
+                          placeholder="หมวดหมู่"
+                          value={item.category}
+                          onChange={e => handleItemChange(idx, 'category', e.target.value)}
+                          className="w-full border rounded px-2 py-1"
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <input
+                          type="number"
+                          placeholder="จำนวน"
+                          value={item.quantity}
+                          onChange={e => handleItemChange(idx, 'quantity', e.target.value)}
+                          className="w-full border rounded px-2 py-1 text-right"
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <input
+                          placeholder="หน่วย"
+                          value={item.unit}
+                          onChange={e => handleItemChange(idx, 'unit', e.target.value)}
+                          className="w-full border rounded px-2 py-1"
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <input
+                          type="number"
+                          placeholder="ราคาต่อหน่วย"
+                          value={item.unitPrice}
+                          onChange={e => handleItemChange(idx, 'unitPrice', e.target.value)}
+                          className="w-full border rounded px-2 py-1 text-right"
+                        />
+                      </td>
+                      <td className="px-2 py-1 text-right">{item.amount.toFixed(2)}</td>
+                      <td className="px-2 py-1 text-center">
+                        {form.expenseItems.length > 1 && (
+                          <button
+                            type="button"
+                            className="text-red-500"
+                            onClick={() => handleRemoveItem(idx)}
+                          >
+                            ลบ
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <button
+                type="button"
+                className="mt-2 px-3 py-1 border border-blue-500 text-blue-600 rounded hover:bg-blue-50"
+                onClick={handleAddItem}
+              >
+                + เพิ่มแถวรายการ
+              </button>
             </div>
           </div>
           <div className="flex justify-end gap-2">
@@ -171,8 +245,8 @@ function CreateExpenseModal({ open, onClose, onCreated }: { open: boolean, onClo
             <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded" disabled={loading}>{loading ? 'Saving...' : 'Save'}</button>
           </div>
         </form>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
 
