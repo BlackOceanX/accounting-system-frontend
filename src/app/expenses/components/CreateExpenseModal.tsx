@@ -161,7 +161,7 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-4">
               <label htmlFor="documentNumber" className="block text-sm font-medium">
                 เลขที่เอกสาร
               </label>
@@ -174,9 +174,58 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
               {errors.documentNumber && (
                 <p className="text-red-500 text-sm mt-1">{errors.documentNumber.message}</p>
               )}
+
+              <label htmlFor="vendorName" className="block text-sm font-medium mt-2">
+                ชื่อผู้จำหน่าย
+              </label>
+              <input
+                id="vendorName"
+                {...register('vendorName')}
+                className="w-full border rounded px-2 py-1"
+              />
+              {errors.vendorName && (
+                <p className="text-red-500 text-sm mt-1">{errors.vendorName.message}</p>
+              )}
+
+              <label htmlFor="vendorDetail" className="block text-sm font-medium mt-2">
+                ข้อมูลผู้จำหน่าย
+              </label>
+              <textarea
+                id="vendorDetail"
+                {...register('vendorDetail')}
+                className="w-full border rounded px-2 py-1"
+                rows={3}
+              />
+              {errors.vendorDetail && (
+                <p className="text-red-500 text-sm mt-1">{errors.vendorDetail.message}</p>
+              )}
+
+              <label htmlFor="project" className="block text-sm font-medium mt-2">
+                โปรเจ็ค
+              </label>
+              <input
+                id="project"
+                {...register('project')}
+                className="w-full border rounded px-2 py-1"
+              />
+              {errors.project && (
+                <p className="text-red-500 text-sm mt-1">{errors.project.message}</p>
+              )}
+
+              <label htmlFor="referenceNumber" className="block text-sm font-medium mt-2">
+                เลขที่อ้างอิง
+              </label>
+              <input
+                id="referenceNumber"
+                {...register('referenceNumber')}
+                className="w-full border rounded px-2 py-1"
+              />
+              {errors.referenceNumber && (
+                <p className="text-red-500 text-sm mt-1">{errors.referenceNumber.message}</p>
+              )}
             </div>
 
-            <div>
+            <div className="space-y-4">
               <label htmlFor="date" className="block text-sm font-medium">
                 วันที่
               </label>
@@ -189,13 +238,115 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
               {errors.date && (
                 <p className="text-red-500 text-sm mt-1">{errors.date.message}</p>
               )}
-            </div>
 
-            {/* Add other form fields similarly */}
+              <label htmlFor="creditTerm" className="block text-sm font-medium mt-2">
+                เครดิต (วัน)
+              </label>
+              <input
+                id="creditTerm"
+                type="number"
+                {...register('creditTerm', { valueAsNumber: true })}
+                className="w-full border rounded px-2 py-1 text-right"
+              />
+              {errors.creditTerm && (
+                <p className="text-red-500 text-sm mt-1">{errors.creditTerm.message}</p>
+              )}
+
+              <label htmlFor="dueDate" className="block text-sm font-medium mt-2">
+                ครบกำหนด
+              </label>
+              <input
+                id="dueDate"
+                type="date"
+                {...register('dueDate')}
+                className="w-full border rounded px-2 py-1"
+              />
+              {errors.dueDate && (
+                <p className="text-red-500 text-sm mt-1">{errors.dueDate.message}</p>
+              )}
+
+              <label htmlFor="currency" className="block text-sm font-medium mt-2">
+                สกุลเงิน
+              </label>
+              <select
+                id="currency"
+                {...register('currency')}
+                className="w-full border rounded px-2 py-1"
+              >
+                <option value="THB">THB - ไทย</option>
+                <option value="USD">USD - US Dollar</option>
+                <option value="EUR">EUR - Euro</option>
+              </select>
+              {errors.currency && (
+                <p className="text-red-500 text-sm mt-1">{errors.currency.message}</p>
+              )}
+
+              <label htmlFor="discount" className="block text-sm font-medium mt-2">
+                ส่วนลด
+              </label>
+              <input
+                id="discount"
+                type="number"
+                {...register('discount', { valueAsNumber: true })}
+                className="w-full border rounded px-2 py-1 text-right"
+              />
+              {errors.discount && (
+                <p className="text-red-500 text-sm mt-1">{errors.discount.message}</p>
+              )}
+
+              <div className="flex items-center mt-2">
+                <input
+                  id="vatIncluded"
+                  type="checkbox"
+                  {...register('vatIncluded')}
+                  className="mr-2"
+                />
+                <label htmlFor="vatIncluded" className="text-sm font-medium">
+                  ราคารวมภาษี
+                </label>
+              </div>
+            </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <div>
+              <label htmlFor="remark" className="block text-sm font-medium">
+                หมายเหตุ
+              </label>
+              <textarea
+                id="remark"
+                {...register('remark')}
+                className="w-full border rounded px-2 py-1"
+                rows={2}
+              />
+              {errors.remark && (
+                <p className="text-red-500 text-sm mt-1">{errors.remark.message}</p>
+              )}
+            </div>
+            <div>
+              <label htmlFor="internalNote" className="block text-sm font-medium">
+                บันทึกภายใน
+              </label>
+              <textarea
+                id="internalNote"
+                {...register('internalNote')}
+                className="w-full border rounded px-2 py-1"
+                rows={2}
+              />
+              {errors.internalNote && (
+                <p className="text-red-500 text-sm mt-1">{errors.internalNote.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-end items-center gap-4 mt-2">
+            <span className="text-lg font-bold">จำนวนเงินรวมทั้งสิ้น:</span>
+            <span className="text-2xl text-blue-600 font-bold">{watch('totalAmount').toFixed(2)}</span>
+          </div>
+
+          {/* รายละเอียดรายการ */}
           <div>
-            <label className="block text-sm font-medium mb-2">รายการค่าใช้จ่าย</label>
+            <label className="block text-sm font-medium mb-2">รายละเอียดรายการค่าใช้จ่าย</label>
             <div className="overflow-x-auto">
               <table className="min-w-full border rounded">
                 <thead>
