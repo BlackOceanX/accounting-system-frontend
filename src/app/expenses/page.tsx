@@ -252,6 +252,8 @@ function CreateExpenseModal({ open, onClose, onCreated }: { open: boolean, onClo
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -284,6 +286,22 @@ export default function ExpensesPage() {
   }, [pageNumber, pageSize]);
 
   useEffect(() => {
+    if (!search) {
+      setFilteredExpenses(expenses);
+    } else {
+      const lower = search.toLowerCase();
+      setFilteredExpenses(
+        expenses.filter(e =>
+          (e.documentNumber || "").toLowerCase().includes(lower) ||
+          (e.vendorName || "").toLowerCase().includes(lower) ||
+          (e.expenseItems?.[0]?.category || "").toLowerCase().includes(lower) ||
+          (e.remark || "").toLowerCase().includes(lower)
+        )
+      );
+    }
+  }, [search, expenses]);
+
+  useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
         setActionMenuOpen(null);
@@ -313,7 +331,27 @@ export default function ExpensesPage() {
           <h1 className="text-2xl font-bold text-blue-700">ค่าใช้จ่าย</h1>
           <div className="text-sm text-gray-500 mt-1">ค่าใช้จ่าย &gt; ค่าใช้จ่ายทั้งหมด</div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {/* Search UI */}
+          <div className="relative">
+            <input
+              type="text"
+              className="border rounded px-3 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              placeholder="ค้นหา..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Escape') setSearch(''); }}
+            />
+            <button
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-600"
+              onClick={() => setSearch("")}
+              title="ล้างการค้นหา"
+              style={{ display: search ? 'block' : 'none' }}
+              type="button"
+            >
+              ×
+            </button>
+          </div>
           <button className="bg-white border border-blue-600 text-blue-600 px-4 py-2 rounded hover:bg-blue-50 transition">สแกนใบเสร็จ & ใบเสร็จรับเงิน</button>
           <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition" onClick={() => setShowCreateModal(true)}>สร้างใหม่</button>
         </div>
@@ -353,7 +391,7 @@ export default function ExpensesPage() {
                 </tr>
               </thead>
               <tbody>
-                {expenses.map((expense) => (
+                {(search ? filteredExpenses : expenses).map((expense) => (
                   <tr key={expense.id} className="border-b hover:bg-gray-50 relative">
                     <td className="px-4 py-3">
                       <input type="checkbox" className="accent-blue-600" />
@@ -419,12 +457,12 @@ export default function ExpensesPage() {
             </table>
           </div>
         )}
-        {!loading && !error && expenses.length === 0 && (
+        {!loading && !error && (search ? filteredExpenses.length === 0 : expenses.length === 0) && (
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400 mt-8">
             <svg width="64" height="64" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="mb-4">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-7 8h6a2 2 0 002-2V6a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <div className="text-lg">คลิกที่นี่เพื่อสร้างเอกสารค่าใช้จ่ายแรก</div>
+            <div className="text-lg">ไม่พบข้อมูลรายการค่าใช้จ่าย</div>
           </div>
         )}
       </div>
