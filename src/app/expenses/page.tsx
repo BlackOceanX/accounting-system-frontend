@@ -7,6 +7,7 @@ import { ExpenseSearch } from './components/ExpenseSearch';
 import { ExpensePagination } from './components/ExpensePagination';
 import { expenseService, Expense } from '@/services/expenseService';
 import { EditExpenseModal } from './components/EditExpenseModal';
+import { DeleteExpenseModal } from './components/DeleteExpenseModal';
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -21,6 +22,8 @@ export default function ExpensesPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
 
   const fetchExpenses = async () => {
     try {
@@ -59,14 +62,21 @@ export default function ExpensesPage() {
   };
 
   const handleDelete = async (expense: Expense) => {
-    if (window.confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')) {
-      try {
-        await expenseService.deleteExpense(expense.id);
-        await fetchExpenses();
-      } catch (err) {
-        console.error('Error deleting expense:', err);
-        alert('เกิดข้อผิดพลาดในการลบรายการ');
-      }
+    setExpenseToDelete(expense);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!expenseToDelete) return;
+    
+    try {
+      await expenseService.deleteExpense(expenseToDelete.id);
+      await fetchExpenses();
+      setIsDeleteModalOpen(false);
+      setExpenseToDelete(null);
+    } catch (err) {
+      console.error('Error deleting expense:', err);
+      alert('เกิดข้อผิดพลาดในการลบรายการ');
     }
   };
 
@@ -199,6 +209,16 @@ export default function ExpensesPage() {
           expense={selectedExpense}
         />
       )}
+
+      <DeleteExpenseModal
+        open={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setExpenseToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        expense={expenseToDelete}
+      />
     </div>
   );
 } 

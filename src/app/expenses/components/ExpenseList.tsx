@@ -35,9 +35,7 @@ export function ExpenseList({ expenses, onEdit, onDelete }: ExpenseListProps) {
       <table className="min-w-full">
         <thead>
           <tr className="bg-blue-100 text-blue-700">
-            <th className="px-4 py-2 text-left font-semibold">
-              <input type="checkbox" className="accent-blue-600" />
-            </th>
+            <th className="px-4 py-2 text-left font-semibold">ลำดับ</th>
             <th className="px-4 py-2 text-left font-semibold">วันที่</th>
             <th className="px-4 py-2 text-left font-semibold">เลขที่เอกสาร</th>
             <th className="px-4 py-2 text-left font-semibold">ผู้จัดจำหน่าย</th>
@@ -48,11 +46,9 @@ export function ExpenseList({ expenses, onEdit, onDelete }: ExpenseListProps) {
           </tr>
         </thead>
         <tbody>
-          {expenses.map((expense) => (
+          {expenses.map((expense, index) => (
             <tr key={expense.id} className="border-b hover:bg-gray-50 relative">
-              <td className="px-4 py-3">
-                <input type="checkbox" className="accent-blue-600" />
-              </td>
+              <td className="px-4 py-3">{index + 1}</td>
               <td className="px-4 py-3">{new Date(expense.date).toLocaleDateString()}</td>
               <td className="px-4 py-3">{expense.documentNumber}</td>
               <td className="px-4 py-3">{expense.vendorName}</td>
