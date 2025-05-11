@@ -81,18 +81,23 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
   const watchExpenseItems = watch('expenseItems');
   const watchDate = watch('date');
 
-  // Calculate total amount whenever expense items change
-  React.useEffect(() => {
-    const total = watchExpenseItems.reduce((sum: number, item: FormExpenseItem) => sum + (item.amount || 0), 0);
-    setValue('totalAmount', total);
-  }, [watchExpenseItems, setValue]);
-
   // Calculate item amount whenever quantity or unit price changes
   React.useEffect(() => {
     watchExpenseItems.forEach((item: FormExpenseItem, index: number) => {
-      const amount = (item.quantity || 0) * (item.unitPrice || 0);
+      const quantity = Number(item.quantity) || 0;
+      const unitPrice = Number(item.unitPrice) || 0;
+      const amount = Number((quantity * unitPrice).toFixed(2));
       setValue(`expenseItems.${index}.amount`, amount);
     });
+  }, [watchExpenseItems, setValue]);
+
+  // Calculate total amount whenever expense items change
+  React.useEffect(() => {
+    const total = watchExpenseItems.reduce((sum: number, item: FormExpenseItem) => {
+      const amount = Number(item.amount) || 0;
+      return Number((sum + amount).toFixed(2));
+    }, 0);
+    setValue('totalAmount', total);
   }, [watchExpenseItems, setValue]);
 
   // ดึงเลขที่เอกสารล่าสุดเมื่อ modal เปิดหรือวันที่เปลี่ยน
@@ -356,7 +361,12 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
 
           <div className="flex justify-end items-center gap-4 mt-2 mb-6">
             <span className="text-lg font-bold">จำนวนเงินรวมทั้งสิ้น:</span>
-            <span className="text-2xl text-blue-600 font-bold">{watch('totalAmount').toFixed(2)}</span>
+            <span className="text-2xl text-blue-600 font-bold">
+              {Number(watch('totalAmount') || 0).toLocaleString('th-TH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })}
+            </span>
           </div>
 
           {/* รายละเอียดรายการ */}
@@ -395,7 +405,26 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
                       <td className="px-2 py-2">
                         <input
                           type="number"
-                          {...register(`expenseItems.${index}.quantity`, { valueAsNumber: true })}
+                          {...register(`expenseItems.${index}.quantity`, { 
+                            valueAsNumber: true,
+                            onChange: (e) => {
+                              const value = Number(e.target.value) || 0;
+                              setValue(`expenseItems.${index}.quantity`, value);
+                              const unitPrice = Number(watchExpenseItems[index]?.unitPrice) || 0;
+                              const amount = Number((value * unitPrice).toFixed(2));
+                              setValue(`expenseItems.${index}.amount`, amount);
+                              
+                              // Calculate total amount
+                              const items = watchExpenseItems.map((item, i) => {
+                                if (i === index) {
+                                  return { ...item, amount };
+                                }
+                                return item;
+                              });
+                              const total = items.reduce((sum, item) => Number((sum + (Number(item.amount) || 0)).toFixed(2)), 0);
+                              setValue('totalAmount', total);
+                            }
+                          })}
                           className="w-full border border-gray-300 rounded-lg px-2 py-1 text-right focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                         />
                       </td>
@@ -408,12 +437,34 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
                       <td className="px-2 py-2">
                         <input
                           type="number"
-                          {...register(`expenseItems.${index}.unitPrice`, { valueAsNumber: true })}
+                          {...register(`expenseItems.${index}.unitPrice`, { 
+                            valueAsNumber: true,
+                            onChange: (e) => {
+                              const value = Number(e.target.value) || 0;
+                              setValue(`expenseItems.${index}.unitPrice`, value);
+                              const quantity = Number(watchExpenseItems[index]?.quantity) || 0;
+                              const amount = Number((quantity * value).toFixed(2));
+                              setValue(`expenseItems.${index}.amount`, amount);
+                              
+                              // Calculate total amount
+                              const items = watchExpenseItems.map((item, i) => {
+                                if (i === index) {
+                                  return { ...item, amount };
+                                }
+                                return item;
+                              });
+                              const total = items.reduce((sum, item) => Number((sum + (Number(item.amount) || 0)).toFixed(2)), 0);
+                              setValue('totalAmount', total);
+                            }
+                          })}
                           className="w-full border border-gray-300 rounded-lg px-2 py-1 text-right focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                         />
                       </td>
                       <td className="px-2 py-2 text-right">
-                        {watchExpenseItems[index]?.amount.toFixed(2)}
+                        {Number(watchExpenseItems[index]?.amount || 0).toLocaleString('th-TH', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })}
                       </td>
                       <td className="px-2 py-2 text-center">
                         {fields.length > 1 && (
