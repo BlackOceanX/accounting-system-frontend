@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { CreateExpenseModal } from './components/CreateExpenseModal';
-import { ExpenseList } from './components/ExpenseList';
-import { ExpenseSearch } from './components/ExpenseSearch';
-import { ExpensePagination } from './components/ExpensePagination';
+import { CreateExpenseModal } from '../../components/CreateExpenseModal';
+import { ExpenseList } from '../../components/ExpenseList';
+import { ExpenseSearch } from '../../components/ExpenseSearch';
+import { ExpensePagination } from '../../components/ExpensePagination';
 import { expenseService, Expense } from '@/services/expenseService';
-import { EditExpenseModal } from './components/EditExpenseModal';
-import { DeleteExpenseModal } from './components/DeleteExpenseModal';
+import { EditExpenseModal } from '../../components/EditExpenseModal';
+import { DeleteExpenseModal } from '../../components/DeleteExpenseModal';
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
