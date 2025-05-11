@@ -11,8 +11,8 @@ export function ExpenseSearch({ search, onSearchChange }: ExpenseSearchProps) {
       <div className="relative">
         <input
           type="text"
-          className="border rounded px-3 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-blue-300"
-          placeholder="ค้นหา..."
+          className="border rounded px-3 py-2 w-[36rem] focus:outline-none focus:ring-2 focus:ring-blue-300"
+          placeholder="ค้นหาจากชื่อลูกค้า/ชื่อผู้จำหน่าย, เลขที่เอกสาร, โครงการ, รายละเอียด"
           value={search}
           onChange={e => onSearchChange(e.target.value)}
           onKeyDown={e => { if (e.key === 'Escape') onSearchChange(''); }}
