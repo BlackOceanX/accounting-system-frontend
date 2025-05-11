@@ -56,7 +56,10 @@ export function ExpenseList({ expenses, onEdit, onDelete }: ExpenseListProps) {
                 {expense.expenseItems?.[0]?.category || 'N/A'}
               </td>
               <td className="px-4 py-3">
-                {expense.currency} {expense.totalAmount.toFixed(2)}
+                {expense.currency} {Number((expense.totalAmount || 0) * (1 - (expense.discount || 0) / 100)).toLocaleString('th-TH', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}
               </td>
               <td className="px-4 py-3">
                 <span className={`px-2 py-1 rounded-full text-xs ${

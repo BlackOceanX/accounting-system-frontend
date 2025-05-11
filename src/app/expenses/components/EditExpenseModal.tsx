@@ -27,7 +27,6 @@ const expenseFormSchema = z.object({
   dueDate: z.string(),
   currency: z.string().nullable(),
   discount: z.number().min(0),
-  vatIncluded: z.boolean(),
   remark: z.string().min(1, 'หมายเหตุต้องมีอย่างน้อย 1 ตัวอักษร').nullable(),
   internalNote: z.string().min(1, 'บันทึกภายในต้องมีอย่างน้อย 1 ตัวอักษร').nullable(),
   totalAmount: z.number(),
@@ -83,7 +82,6 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
       dueDate: toInputDateFormat(expense.dueDate),
       currency: expense.currency || 'THB',
       discount: expense.discount,
-      vatIncluded: expense.vatIncluded,
       remark: expense.remark || '',
       internalNote: expense.internalNote || '',
       totalAmount: expense.totalAmount,
@@ -118,7 +116,6 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
       dueDate: toInputDateFormat(expense.dueDate),
       currency: expense.currency || 'THB',
       discount: expense.discount,
-      vatIncluded: expense.vatIncluded,
       remark: expense.remark || '',
       internalNote: expense.internalNote || '',
       totalAmount: expense.totalAmount,
@@ -181,11 +178,22 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
         currency: data.currency || null,
         remark: data.remark || null,
         internalNote: data.internalNote || null,
-        expenseItems: data.expenseItems.map(item => ({
-          ...item,
-          id: 0, // This will be set by the backend
-          expenseId: expense.id
-        }))
+        expenseItems: data.expenseItems.map((item, index) => {
+          // If the item exists in the original expense, keep its ID
+          const existingItem = expense.expenseItems?.find(
+            (ei) => ei.description === item.description && 
+                   ei.category === item.category && 
+                   ei.quantity === item.quantity && 
+                   ei.unit === item.unit && 
+                   ei.unitPrice === item.unitPrice
+          );
+          
+          return {
+            ...item,
+            id: existingItem?.id || 0, // Keep existing ID or set to 0 for new items
+            expenseId: expense.id
+          };
+        })
       };
       await expenseService.updateExpense(expense.id, expenseData);
       onUpdated();

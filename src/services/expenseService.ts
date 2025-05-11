@@ -44,7 +44,6 @@ export interface Expense {
   dueDate: string;
   currency: string | null;
   discount: number;
-  vatIncluded: boolean;
   remark: string | null;
   internalNote: string | null;
   totalAmount: number;

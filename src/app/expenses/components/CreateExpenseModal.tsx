@@ -170,7 +170,6 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
         currency: data.currency || null,
         remark: data.remark || null,
         internalNote: data.internalNote || null,
-        vatIncluded: false,
         expenseItems: data.expenseItems.map(item => ({
           ...item,
           id: 0, // This will be set by the backend
