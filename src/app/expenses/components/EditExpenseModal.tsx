@@ -18,9 +18,9 @@ const expenseItemSchema = z.object({
 
 const expenseFormSchema = z.object({
   documentNumber: z.string().nullable(),
-  vendorName: z.string().min(1, 'Vendor name is required').nullable(),
-  vendorDetail: z.string().nullable(),
-  project: z.string().nullable(),
+  vendorName: z.string().min(1, 'ชื่อผู้จำหน่ายต้องมีอย่างน้อย 1 ตัวอักษร').nullable(),
+  vendorDetail: z.string().min(1, 'ข้อมูลผู้จำหน่ายต้องมีอย่างน้อย 1 ตัวอักษร').nullable(),
+  project: z.string().min(1, 'โปรเจ็คต้องมีอย่างน้อย 1 ตัวอักษร').nullable(),
   referenceNumber: z.string().nullable(),
   date: z.string(),
   creditTerm: z.number().min(0),
@@ -28,8 +28,8 @@ const expenseFormSchema = z.object({
   currency: z.string().nullable(),
   discount: z.number().min(0),
   vatIncluded: z.boolean(),
-  remark: z.string().nullable(),
-  internalNote: z.string().nullable(),
+  remark: z.string().min(1, 'หมายเหตุต้องมีอย่างน้อย 1 ตัวอักษร').nullable(),
+  internalNote: z.string().min(1, 'บันทึกภายในต้องมีอย่างน้อย 1 ตัวอักษร').nullable(),
   totalAmount: z.number(),
   expenseItems: z.array(expenseItemSchema).min(1, 'At least one expense item is required')
 });
@@ -50,7 +50,8 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
     control,
     formState: { errors, isSubmitting },
     setValue,
-    watch
+    watch,
+    reset
   } = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
@@ -85,20 +86,69 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
   });
 
   const watchExpenseItems = watch('expenseItems');
+  const watchDate = watch('date');
+  const watchDiscount = watch('discount');
 
-  // Calculate total amount whenever expense items change
-  React.useEffect(() => {
-    const total = watchExpenseItems.reduce((sum: number, item: FormExpenseItem) => sum + (item.amount || 0), 0);
-    setValue('totalAmount', total);
-  }, [watchExpenseItems, setValue]);
+  const resetForm = () => {
+    reset({
+      documentNumber: expense.documentNumber || '',
+      vendorName: expense.vendorName || '',
+      vendorDetail: expense.vendorDetail || '',
+      project: expense.project || '',
+      referenceNumber: expense.referenceNumber || '',
+      date: expense.date,
+      creditTerm: expense.creditTerm,
+      dueDate: expense.dueDate,
+      currency: expense.currency || 'THB',
+      discount: expense.discount,
+      vatIncluded: expense.vatIncluded,
+      remark: expense.remark || '',
+      internalNote: expense.internalNote || '',
+      totalAmount: expense.totalAmount,
+      expenseItems: expense.expenseItems?.map(item => ({
+        description: item.description || '',
+        category: item.category || '',
+        quantity: item.quantity,
+        unit: item.unit || '',
+        unitPrice: item.unitPrice,
+        amount: item.amount
+      })) || []
+    });
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const handleAddItem = () => {
+    append({ description: '', category: '', quantity: 1, unit: '', unitPrice: 0, amount: 0 });
+  };
 
   // Calculate item amount whenever quantity or unit price changes
   React.useEffect(() => {
     watchExpenseItems.forEach((item: FormExpenseItem, index: number) => {
-      const amount = (item.quantity || 0) * (item.unitPrice || 0);
+      const quantity = Number(item.quantity) || 0;
+      const unitPrice = Number(item.unitPrice) || 0;
+      const amount = Number((quantity * unitPrice).toFixed(2));
       setValue(`expenseItems.${index}.amount`, amount);
     });
   }, [watchExpenseItems, setValue]);
+
+  // Calculate total amount whenever expense items change
+  React.useEffect(() => {
+    const total = watchExpenseItems.reduce((sum: number, item: FormExpenseItem) => {
+      const amount = Number(item.amount) || 0;
+      return Number((sum + amount).toFixed(2));
+    }, 0);
+    setValue('totalAmount', total);
+  }, [watchExpenseItems, setValue]);
+
+  const discountedAmount = React.useMemo(() => {
+    const total = Number(watch('totalAmount')) || 0;
+    const discount = Number(watchDiscount) || 0;
+    return Number((total - (total * discount / 100)).toFixed(2));
+  }, [watch('totalAmount'), watchDiscount]);
 
   const onSubmit: SubmitHandler<ExpenseFormData> = async (data) => {
     try {
@@ -135,7 +185,7 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
         <button
           type="button"
           className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl"
-          onClick={onClose}
+          onClick={handleClose}
           aria-label="Close modal"
         >
           ×
@@ -175,7 +225,7 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
                 )}
               </div>
               <div>
-                <label htmlFor="vendorName" className="block text-sm font-semibold text-gray-700 mb-1">
+                <label htmlFor="vendorName" className="block text-sm font-semibold text-gray-700 mb-1 mt-2 md:mt-0">
                   ชื่อผู้จำหน่าย
                 </label>
                 <input
@@ -188,18 +238,39 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
                 )}
               </div>
               <div>
-                <label htmlFor="vendorDetail" className="block text-sm font-semibold text-gray-700 mb-1">
-                  รายละเอียดผู้จำหน่าย
+                <label htmlFor="creditTerm" className="block text-sm font-semibold text-gray-700 mb-1 mt-2 md:mt-0">
+                  เครดิต (วัน)
                 </label>
                 <input
+                  id="creditTerm"
+                  type="number"
+                  {...register('creditTerm', { valueAsNumber: true })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-right focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                />
+                {errors.creditTerm && (
+                  <p className="text-red-500 text-xs mt-1">{errors.creditTerm.message}</p>
+                )}
+              </div>
+              <div className="md:col-span-2">
+                <label htmlFor="vendorDetail" className="block text-sm font-semibold text-gray-700 mb-1 mt-2">
+                  ข้อมูลผู้จำหน่าย
+                </label>
+                <textarea
                   id="vendorDetail"
                   {...register('vendorDetail')}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                  rows={3}
                 />
                 {errors.vendorDetail && (
                   <p className="text-red-500 text-xs mt-1">{errors.vendorDetail.message}</p>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* กลุ่ม: รายละเอียดเอกสาร */}
+          <div className="bg-gray-50 rounded-lg p-4 mb-6 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="project" className="block text-sm font-semibold text-gray-700 mb-1">
                   โครงการ
@@ -211,6 +282,20 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
                 />
                 {errors.project && (
                   <p className="text-red-500 text-xs mt-1">{errors.project.message}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="dueDate" className="block text-sm font-semibold text-gray-700 mb-1">
+                  ครบกำหนด
+                </label>
+                <input
+                  id="dueDate"
+                  type="date"
+                  {...register('dueDate')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                />
+                {errors.dueDate && (
+                  <p className="text-red-500 text-xs mt-1">{errors.dueDate.message}</p>
                 )}
               </div>
               <div>
@@ -243,9 +328,24 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
                   <p className="text-red-500 text-xs mt-1">{errors.currency.message}</p>
                 )}
               </div>
+              <div>
+                <label htmlFor="discount" className="block text-sm font-semibold text-gray-700 mb-1">
+                  ส่วนลด (เปอร์เซ็นต์)
+                </label>
+                <input
+                  id="discount"
+                  type="number"
+                  {...register('discount', { valueAsNumber: true })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-right focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                />
+                {errors.discount && (
+                  <p className="text-red-500 text-xs mt-1">{errors.discount.message}</p>
+                )}
+              </div>
             </div>
           </div>
 
+          {/* กลุ่ม: หมายเหตุ/บันทึกภายใน */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label htmlFor="remark" className="block text-sm font-semibold text-gray-700 mb-1">
@@ -278,8 +378,33 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
           </div>
 
           <div className="flex justify-end items-center gap-4 mt-2 mb-6">
-            <span className="text-lg font-bold">จำนวนเงินรวมทั้งสิ้น:</span>
-            <span className="text-2xl text-blue-600 font-bold">{watch('totalAmount').toFixed(2)}</span>
+            <div className="flex flex-col items-end mr-8">
+              <span className="text-blue-600 font-semibold">รวมเป็นเงิน</span>
+              <span className="text-2xl text-black font-bold">
+                {Number(watch('totalAmount') || 0).toLocaleString('th-TH', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}
+              </span>
+            </div>
+            <div className="flex flex-col items-end mr-8">
+              <span className="text-blue-600 font-semibold">ราคาหลังหักส่วนลด</span>
+              <span className="text-2xl text-black font-bold">
+                {discountedAmount.toLocaleString('th-TH', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}
+              </span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-lg font-bold">จำนวนเงินรวมทั้งสิ้น:</span>
+              <span className="text-2xl text-blue-600 font-bold">
+                {discountedAmount.toLocaleString('th-TH', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}
+              </span>
+            </div>
           </div>
 
           {/* รายละเอียดรายการ */}
@@ -318,7 +443,26 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
                       <td className="px-2 py-2">
                         <input
                           type="number"
-                          {...register(`expenseItems.${index}.quantity`, { valueAsNumber: true })}
+                          {...register(`expenseItems.${index}.quantity`, { 
+                            valueAsNumber: true,
+                            onChange: (e) => {
+                              const value = Number(e.target.value) || 0;
+                              setValue(`expenseItems.${index}.quantity`, value);
+                              const unitPrice = Number(watchExpenseItems[index]?.unitPrice) || 0;
+                              const amount = Number((value * unitPrice).toFixed(2));
+                              setValue(`expenseItems.${index}.amount`, amount);
+                              
+                              // Calculate total amount
+                              const items = watchExpenseItems.map((item, i) => {
+                                if (i === index) {
+                                  return { ...item, amount };
+                                }
+                                return item;
+                              });
+                              const total = items.reduce((sum, item) => Number((sum + (Number(item.amount) || 0)).toFixed(2)), 0);
+                              setValue('totalAmount', total);
+                            }
+                          })}
                           className="w-full border border-gray-300 rounded-lg px-2 py-1 text-right focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                         />
                       </td>
@@ -331,12 +475,34 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
                       <td className="px-2 py-2">
                         <input
                           type="number"
-                          {...register(`expenseItems.${index}.unitPrice`, { valueAsNumber: true })}
+                          {...register(`expenseItems.${index}.unitPrice`, { 
+                            valueAsNumber: true,
+                            onChange: (e) => {
+                              const value = Number(e.target.value) || 0;
+                              setValue(`expenseItems.${index}.unitPrice`, value);
+                              const quantity = Number(watchExpenseItems[index]?.quantity) || 0;
+                              const amount = Number((quantity * value).toFixed(2));
+                              setValue(`expenseItems.${index}.amount`, amount);
+                              
+                              // Calculate total amount
+                              const items = watchExpenseItems.map((item, i) => {
+                                if (i === index) {
+                                  return { ...item, amount };
+                                }
+                                return item;
+                              });
+                              const total = items.reduce((sum, item) => Number((sum + (Number(item.amount) || 0)).toFixed(2)), 0);
+                              setValue('totalAmount', total);
+                            }
+                          })}
                           className="w-full border border-gray-300 rounded-lg px-2 py-1 text-right focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                         />
                       </td>
                       <td className="px-2 py-2 text-right">
-                        {watchExpenseItems[index]?.amount.toFixed(2)}
+                        {Number(watchExpenseItems[index]?.amount || 0).toLocaleString('th-TH', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })}
                       </td>
                       <td className="px-2 py-2 text-center">
                         {fields.length > 1 && (
@@ -355,7 +521,7 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
               </table>
               <button
                 type="button"
-                onClick={() => append({ description: '', category: '', quantity: 1, unit: '', unitPrice: 0, amount: 0 })}
+                onClick={handleAddItem}
                 className="mt-3 px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 font-semibold transition"
               >
                 + เพิ่มแถวรายการ
@@ -366,7 +532,7 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
           <div className="flex justify-end gap-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-5 py-2 bg-gray-200 rounded-lg font-semibold hover:bg-gray-300 transition"
             >
               Cancel

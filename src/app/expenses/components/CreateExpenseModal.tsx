@@ -20,7 +20,7 @@ const expenseFormSchema = z.object({
   documentNumber: z.string().nullable(),
   vendorName: z.string().min(1, 'ชื่อผู้จำหน่ายต้องมีอย่างน้อย 1 ตัวอักษร').nullable(),
   vendorDetail: z.string().min(1, 'ข้อมูลผู้จำหน่ายต้องมีอย่างน้อย 1 ตัวอักษร').nullable(),
-  project: z.string().min(1, 'โปรเจ็คต้องมีอย่างน้อย 1 ตัวอักษร').nullable(),
+  project: z.string().min(1, 'โครงการต้องมีอย่างน้อย 1 ตัวอักษร').nullable(),
   referenceNumber: z.string().nullable(),
   date: z.string(),
   creditTerm: z.number().min(0),
@@ -281,7 +281,7 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="project" className="block text-sm font-semibold text-gray-700 mb-1">
-                  โปรเจ็ค
+                  โครงการ
                 </label>
                 <input
                   id="project"
