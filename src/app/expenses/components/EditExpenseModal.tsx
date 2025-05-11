@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -39,7 +39,7 @@ interface EditExpenseModalProps {
   open: boolean;
   onClose: () => void;
   onUpdated: () => void;
-  expense: Expense;
+  expenseId: number;
 }
 
 // Utility function to convert date string to yyyy-MM-dd format for input type="date"
@@ -60,7 +60,30 @@ function toInputDateFormat(dateStr?: string | null): string {
   return '';
 }
 
-export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpenseModalProps) {  
+export function EditExpenseModal({ open, onClose, onUpdated, expenseId }: EditExpenseModalProps) {  
+  const [expense, setExpense] = useState<Expense | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchExpense = async () => {
+      if (!open) return;
+      
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await expenseService.getExpenseById(expenseId);
+        setExpense(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch expense');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchExpense();
+  }, [expenseId, open]);
+
   const {
     register,
     handleSubmit,
@@ -72,29 +95,51 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
   } = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
-      documentNumber: expense.documentNumber || '',
-      vendorName: expense.vendorName || '',
-      vendorDetail: expense.vendorDetail || '',
-      project: expense.project || '',
-      referenceNumber: expense.referenceNumber || '',
-      date: toInputDateFormat(expense.date),
-      creditTerm: expense.creditTerm,
-      dueDate: toInputDateFormat(expense.dueDate),
-      currency: expense.currency || 'THB',
-      discount: expense.discount,
-      remark: expense.remark || '',
-      internalNote: expense.internalNote || '',
-      totalAmount: expense.totalAmount,
-      expenseItems: expense.expenseItems?.map(item => ({
-        description: item.description || '',
-        category: item.category || '',
-        quantity: item.quantity,
-        unit: item.unit || '',
-        unitPrice: item.unitPrice,
-        amount: item.amount
-      })) || []
+      documentNumber: '',
+      vendorName: '',
+      vendorDetail: '',
+      project: '',
+      referenceNumber: '',
+      date: '',
+      creditTerm: 0,
+      dueDate: '',
+      currency: 'THB',
+      discount: 0,
+      remark: '',
+      internalNote: '',
+      totalAmount: 0,
+      expenseItems: []
     }
   });
+
+  // Update form values when expense data is loaded
+  useEffect(() => {
+    if (expense) {
+      reset({
+        documentNumber: expense.documentNumber || '',
+        vendorName: expense.vendorName || '',
+        vendorDetail: expense.vendorDetail || '',
+        project: expense.project || '',
+        referenceNumber: expense.referenceNumber || '',
+        date: toInputDateFormat(expense.date),
+        creditTerm: expense.creditTerm,
+        dueDate: toInputDateFormat(expense.dueDate),
+        currency: expense.currency || 'THB',
+        discount: expense.discount,
+        remark: expense.remark || '',
+        internalNote: expense.internalNote || '',
+        totalAmount: expense.totalAmount,
+        expenseItems: expense.expenseItems?.map(item => ({
+          description: item.description || '',
+          category: item.category || '',
+          quantity: item.quantity,
+          unit: item.unit || '',
+          unitPrice: item.unitPrice,
+          amount: item.amount
+        })) || []
+      });
+    }
+  }, [expense, reset]);
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -106,27 +151,20 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
 
   const resetForm = () => {
     reset({
-      documentNumber: expense.documentNumber || '',
-      vendorName: expense.vendorName || '',
-      vendorDetail: expense.vendorDetail || '',
-      project: expense.project || '',
-      referenceNumber: expense.referenceNumber || '',
-      date: toInputDateFormat(expense.date),
-      creditTerm: expense.creditTerm,
-      dueDate: toInputDateFormat(expense.dueDate),
-      currency: expense.currency || 'THB',
-      discount: expense.discount,
-      remark: expense.remark || '',
-      internalNote: expense.internalNote || '',
-      totalAmount: expense.totalAmount,
-      expenseItems: expense.expenseItems?.map(item => ({
-        description: item.description || '',
-        category: item.category || '',
-        quantity: item.quantity,
-        unit: item.unit || '',
-        unitPrice: item.unitPrice,
-        amount: item.amount
-      })) || []
+      documentNumber: '',
+      vendorName: '',
+      vendorDetail: '',
+      project: '',
+      referenceNumber: '',
+      date: '',
+      creditTerm: 0,
+      dueDate: '',
+      currency: 'THB',
+      discount: 0,
+      remark: '',
+      internalNote: '',
+      totalAmount: 0,
+      expenseItems: []
     });
   };
 
@@ -165,6 +203,8 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
   }, [watch('totalAmount'), watchDiscount]);
 
   const onSubmit: SubmitHandler<ExpenseFormData> = async (data) => {
+    if (!expense) return;
+    
     try {
       // Convert form data to match Expense type
       const expenseData: Expense = {
@@ -204,6 +244,36 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
   };
 
   if (!open) return null;
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <p className="text-lg">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <p className="text-red-500">{error}</p>
+          <button
+            onClick={onClose}
+            className="mt-4 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!expense) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">

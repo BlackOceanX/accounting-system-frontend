@@ -193,7 +193,7 @@ export default function ExpensesPage() {
             setSelectedExpense(null);
             fetchExpenses();
           }}
-          expense={selectedExpense}
+          expenseId={selectedExpense.id}
         />
       )}
 
