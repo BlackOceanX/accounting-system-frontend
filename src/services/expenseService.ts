@@ -59,12 +59,13 @@ export interface PaginatedResponse<T> {
 }
 
 export const expenseService = {
-  async getAllExpenses(pageNumber: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Expense>> {
+  async getAllExpenses(pageNumber: number = 1, pageSize: number = 10, search: string = ''): Promise<PaginatedResponse<Expense>> {
     try {
       const response = await api.get('/Expenses', {
         params: {
           pageNumber,
-          pageSize
+          pageSize,
+          search
         }
       });
       return response.data;

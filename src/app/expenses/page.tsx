@@ -11,7 +11,6 @@ import { DeleteExpenseModal } from './components/DeleteExpenseModal';
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,9 +28,8 @@ export default function ExpensesPage() {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await expenseService.getAllExpenses();
+      const response = await expenseService.getAllExpenses(pageNumber, pageSize, search);
       setExpenses(response.items);
-      setFilteredExpenses(response.items);
       setTotalCount(response.totalCount);
       setTotalPages(response.totalPages);
     } catch (err) {
@@ -44,18 +42,7 @@ export default function ExpensesPage() {
 
   useEffect(() => {
     fetchExpenses();
-  }, []);
-
-  useEffect(() => {
-    const filtered = expenses.filter(expense => 
-      (expense.documentNumber || '').toLowerCase().includes(search.toLowerCase()) ||
-      (expense.vendorName || '').toLowerCase().includes(search.toLowerCase())
-    );
-    setFilteredExpenses(filtered);
-    setTotalCount(filtered.length);
-    setTotalPages(Math.ceil(filtered.length / pageSize));
-    setPageNumber(1);
-  }, [search, expenses, pageSize]);
+  }, [pageNumber, pageSize, search]);
 
   const handleRetry = () => {
     fetchExpenses();
@@ -94,11 +81,6 @@ export default function ExpensesPage() {
     setPageNumber(1);
   };
 
-  const paginatedExpenses = filteredExpenses.slice(
-    (pageNumber - 1) * pageSize,
-    pageNumber * pageSize
-  );
-
   return (
     <div className="flex-1 flex flex-col p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -134,19 +116,22 @@ export default function ExpensesPage() {
             <p className="mt-4 text-gray-600">กำลังโหลดข้อมูล...</p>
           </div>
         ) : error ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-12 text-red-600">
-            <svg className="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <p className="text-lg font-medium mb-4">{error}</p>
+          <div className="flex-1 flex flex-col items-center justify-center p-12">
+            <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">เกิดข้อผิดพลาด</h3>
+            <p className="text-gray-500 mb-6">{error}</p>
             <button
               onClick={handleRetry}
-              className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
             >
               ลองใหม่
             </button>
           </div>
-        ) : filteredExpenses.length === 0 ? (
+        ) : expenses.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center p-12">
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,9 +151,11 @@ export default function ExpensesPage() {
           <>
             <div className="overflow-x-auto">
               <ExpenseList
-                expenses={paginatedExpenses}
+                expenses={expenses}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                pageNumber={pageNumber}
+                pageSize={pageSize}
               />
             </div>
             <div className="p-6 border-t border-gray-200 bg-gray-50">

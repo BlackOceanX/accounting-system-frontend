@@ -196,6 +196,7 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
         })
       };
       await expenseService.updateExpense(expense.id, expenseData);
+      resetForm();
       onUpdated();
     } catch (error) {
       console.error('Failed to update expense:', error);

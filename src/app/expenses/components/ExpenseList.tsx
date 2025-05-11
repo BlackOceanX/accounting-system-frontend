@@ -5,9 +5,11 @@ interface ExpenseListProps {
   expenses: Expense[];
   onEdit: (expense: Expense) => void;
   onDelete: (expense: Expense) => void;
+  pageNumber: number;
+  pageSize: number;
 }
 
-export function ExpenseList({ expenses, onEdit, onDelete }: ExpenseListProps) {
+export function ExpenseList({ expenses, onEdit, onDelete, pageNumber, pageSize }: ExpenseListProps) {
   const [actionMenuOpen, setActionMenuOpen] = React.useState<number | null>(null);
   const [actionMenuPosition, setActionMenuPosition] = React.useState<{ x: number; y: number } | null>(null);
   const actionMenuRef = React.useRef<HTMLDivElement | null>(null);
@@ -48,7 +50,7 @@ export function ExpenseList({ expenses, onEdit, onDelete }: ExpenseListProps) {
         <tbody>
           {expenses.map((expense, index) => (
             <tr key={expense.id} className="border-b hover:bg-gray-50 relative">
-              <td className="px-4 py-3">{index + 1}</td>
+              <td className="px-4 py-3">{(pageNumber - 1) * pageSize + index + 1}</td>
               <td className="px-4 py-3">{new Date(expense.date).toLocaleDateString()}</td>
               <td className="px-4 py-3">{expense.documentNumber}</td>
               <td className="px-4 py-3">{expense.vendorName}</td>

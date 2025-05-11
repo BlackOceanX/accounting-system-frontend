@@ -39,8 +39,17 @@ export function ExpensePagination({
       <div className="flex items-center gap-4">
         <div>
           Showing {((pageNumber - 1) * pageSize) + 1} to {Math.min(pageNumber * pageSize, totalCount)} of {totalCount} items
+          <span className="ml-2">(Page {pageNumber} of {totalPages})</span>
         </div>
         <div className="flex gap-2">
+          <button
+            className="px-2 py-1 border rounded disabled:opacity-50"
+            onClick={() => onPageChange(1)}
+            disabled={pageNumber === 1}
+            aria-label="First page"
+          >
+            First
+          </button>
           <button
             className="px-2 py-1 border rounded disabled:opacity-50"
             onClick={() => onPageChange(Math.max(1, pageNumber - 1))}
@@ -56,6 +65,14 @@ export function ExpensePagination({
             aria-label="Next page"
           >
             Next
+          </button>
+          <button
+            className="px-2 py-1 border rounded disabled:opacity-50"
+            onClick={() => onPageChange(totalPages)}
+            disabled={pageNumber === totalPages}
+            aria-label="Last page"
+          >
+            Last
           </button>
         </div>
       </div>

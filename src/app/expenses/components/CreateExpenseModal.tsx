@@ -177,6 +177,7 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
         }))
       };
       await expenseService.createExpense(expenseData);
+      resetForm();
       onCreated();
       onClose();
     } catch (error) {
