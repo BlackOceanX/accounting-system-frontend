@@ -18,18 +18,17 @@ const expenseItemSchema = z.object({
 
 const expenseFormSchema = z.object({
   documentNumber: z.string().nullable(),
-  vendorName: z.string().min(1, 'Vendor name is required').nullable(),
-  vendorDetail: z.string().nullable(),
-  project: z.string().nullable(),
+  vendorName: z.string().min(1, 'ชื่อผู้จำหน่ายต้องมีอย่างน้อย 1 ตัวอักษร').nullable(),
+  vendorDetail: z.string().min(1, 'ข้อมูลผู้จำหน่ายต้องมีอย่างน้อย 1 ตัวอักษร').nullable(),
+  project: z.string().min(1, 'โปรเจ็คต้องมีอย่างน้อย 1 ตัวอักษร').nullable(),
   referenceNumber: z.string().nullable(),
   date: z.string(),
   creditTerm: z.number().min(0),
   dueDate: z.string(),
   currency: z.string().nullable(),
   discount: z.number().min(0),
-  vatIncluded: z.boolean(),
-  remark: z.string().nullable(),
-  internalNote: z.string().nullable(),
+  remark: z.string().min(1, 'หมายเหตุต้องมีอย่างน้อย 1 ตัวอักษร').nullable(),
+  internalNote: z.string().min(1, 'บันทึกภายในต้องมีอย่างน้อย 1 ตัวอักษร').nullable(),
   totalAmount: z.number(),
   expenseItems: z.array(expenseItemSchema).min(1, 'At least one expense item is required')
 });
@@ -64,7 +63,6 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
       dueDate: new Date().toISOString().slice(0, 10),
       currency: 'THB',
       discount: 0,
-      vatIncluded: false,
       remark: '',
       internalNote: '',
       totalAmount: 0,
@@ -81,6 +79,7 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
 
   const watchExpenseItems = watch('expenseItems');
   const watchDate = watch('date');
+  const watchDiscount = watch('discount');
 
   const resetForm = () => {
     reset({
@@ -94,7 +93,6 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
       dueDate: new Date().toISOString().slice(0, 10),
       currency: 'THB',
       discount: 0,
-      vatIncluded: false,
       remark: '',
       internalNote: '',
       totalAmount: 0,
@@ -153,6 +151,12 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
     }
   }, [open, watchDate, setValue]);
 
+  const discountedAmount = React.useMemo(() => {
+    const total = Number(watch('totalAmount')) || 0;
+    const discount = Number(watchDiscount) || 0;
+    return Number((total - (total * discount / 100)).toFixed(2));
+  }, [watch('totalAmount'), watchDiscount]);
+
   const onSubmit = async (data: ExpenseFormData) => {
     try {
       // Convert form data to match Expense type
@@ -166,6 +170,7 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
         currency: data.currency || null,
         remark: data.remark || null,
         internalNote: data.internalNote || null,
+        vatIncluded: false,
         expenseItems: data.expenseItems.map(item => ({
           ...item,
           id: 0, // This will be set by the backend
@@ -333,7 +338,7 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
               </div>
               <div>
                 <label htmlFor="discount" className="block text-sm font-semibold text-gray-700 mb-1">
-                  ส่วนลด
+                  ส่วนลด (เปอร์เซ็นต์)
                 </label>
                 <input
                   id="discount"
@@ -344,17 +349,6 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
                 {errors.discount && (
                   <p className="text-red-500 text-xs mt-1">{errors.discount.message}</p>
                 )}
-              </div>
-              <div className="flex items-center mt-6">
-                <input
-                  id="vatIncluded"
-                  type="checkbox"
-                  {...register('vatIncluded')}
-                  className="mr-2 h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-400"
-                />
-                <label htmlFor="vatIncluded" className="text-sm font-semibold text-gray-700">
-                  ราคารวมภาษี
-                </label>
               </div>
             </div>
           </div>
@@ -392,13 +386,33 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
           </div>
 
           <div className="flex justify-end items-center gap-4 mt-2 mb-6">
-            <span className="text-lg font-bold">จำนวนเงินรวมทั้งสิ้น:</span>
-            <span className="text-2xl text-blue-600 font-bold">
-              {Number(watch('totalAmount') || 0).toLocaleString('th-TH', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })}
-            </span>
+            <div className="flex flex-col items-end mr-8">
+              <span className="text-blue-600 font-semibold">รวมเป็นเงิน</span>
+              <span className="text-2xl text-black font-bold">
+                {Number(watch('totalAmount') || 0).toLocaleString('th-TH', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}
+              </span>
+            </div>
+            <div className="flex flex-col items-end mr-8">
+              <span className="text-blue-600 font-semibold">ราคาหลังหักส่วนลด</span>
+              <span className="text-2xl text-black font-bold">
+                {discountedAmount.toLocaleString('th-TH', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}
+              </span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-lg font-bold">จำนวนเงินรวมทั้งสิ้น:</span>
+              <span className="text-2xl text-blue-600 font-bold">
+                {discountedAmount.toLocaleString('th-TH', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}
+              </span>
+            </div>
           </div>
 
           {/* รายละเอียดรายการ */}
