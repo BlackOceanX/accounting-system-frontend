@@ -43,7 +43,25 @@ interface EditExpenseModalProps {
   expense: Expense;
 }
 
-export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpenseModalProps) {
+// Utility function to convert date string to yyyy-MM-dd format for input type="date"
+function toInputDateFormat(dateStr?: string | null): string {
+  if (!dateStr) return '';
+  // If already in yyyy-MM-dd
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+  // If in dd/MM/yyyy
+  const match = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (match) {
+    const [, dd, mm, yyyy] = match;
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  // If ISO string (e.g. 2025-05-11T00:00:00Z)
+  if (/^\d{4}-\d{2}-\d{2}T/.test(dateStr)) {
+    return dateStr.slice(0, 10);
+  }
+  return '';
+}
+
+export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpenseModalProps) {  
   const {
     register,
     handleSubmit,
@@ -60,9 +78,9 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
       vendorDetail: expense.vendorDetail || '',
       project: expense.project || '',
       referenceNumber: expense.referenceNumber || '',
-      date: expense.date,
+      date: toInputDateFormat(expense.date),
       creditTerm: expense.creditTerm,
-      dueDate: expense.dueDate,
+      dueDate: toInputDateFormat(expense.dueDate),
       currency: expense.currency || 'THB',
       discount: expense.discount,
       vatIncluded: expense.vatIncluded,
@@ -86,7 +104,6 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
   });
 
   const watchExpenseItems = watch('expenseItems');
-  const watchDate = watch('date');
   const watchDiscount = watch('discount');
 
   const resetForm = () => {
@@ -96,9 +113,9 @@ export function EditExpenseModal({ open, onClose, onUpdated, expense }: EditExpe
       vendorDetail: expense.vendorDetail || '',
       project: expense.project || '',
       referenceNumber: expense.referenceNumber || '',
-      date: expense.date,
+      date: toInputDateFormat(expense.date),
       creditTerm: expense.creditTerm,
-      dueDate: expense.dueDate,
+      dueDate: toInputDateFormat(expense.dueDate),
       currency: expense.currency || 'THB',
       discount: expense.discount,
       vatIncluded: expense.vatIncluded,
