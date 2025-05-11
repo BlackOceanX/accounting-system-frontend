@@ -49,7 +49,8 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
     control,
     formState: { errors, isSubmitting },
     setValue,
-    watch
+    watch,
+    reset
   } = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
@@ -80,6 +81,37 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
 
   const watchExpenseItems = watch('expenseItems');
   const watchDate = watch('date');
+
+  const resetForm = () => {
+    reset({
+      documentNumber: '',
+      vendorName: '',
+      vendorDetail: '',
+      project: '',
+      referenceNumber: '',
+      date: new Date().toISOString().slice(0, 10),
+      creditTerm: 0,
+      dueDate: new Date().toISOString().slice(0, 10),
+      currency: 'THB',
+      discount: 0,
+      vatIncluded: false,
+      remark: '',
+      internalNote: '',
+      totalAmount: 0,
+      expenseItems: [
+        { description: '', category: '', quantity: 1, unit: '', unitPrice: 0, amount: 0 }
+      ]
+    });
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const handleAddItem = () => {
+    append({ description: '', category: '', quantity: 1, unit: '', unitPrice: 0, amount: 0 });
+  };
 
   // Calculate item amount whenever quantity or unit price changes
   React.useEffect(() => {
@@ -483,7 +515,7 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
               </table>
               <button
                 type="button"
-                onClick={() => append({ description: '', category: '', quantity: 1, unit: '', unitPrice: 0, amount: 0 })}
+                onClick={handleAddItem}
                 className="mt-3 px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 font-semibold transition"
               >
                 + เพิ่มแถวรายการ
@@ -494,7 +526,7 @@ export function CreateExpenseModal({ open, onClose, onCreated }: CreateExpenseMo
           <div className="flex justify-end gap-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-5 py-2 bg-gray-200 rounded-lg font-semibold hover:bg-gray-300 transition"
             >
               Cancel
