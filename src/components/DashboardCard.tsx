@@ -42,13 +42,16 @@ const Chart = ({ type, color }: { type: string; color?: string }) => {
 export function DashboardCard({ card }: DashboardCardProps) {
   const [selected, setSelected] = useState(card.filter[0]);
 
+  // ฟังก์ชันย่อข้อความ
+  const shorten = (text: string, max: number) => text.length > max ? text.slice(0, max - 1) + '…' : text;
+
   return (
-    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-6 flex flex-col gap-4 min-h-[320px] border border-gray-100">
+    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-6 flex flex-col gap-4 min-h-[340px] h-[340px] border border-gray-100">
       <div className="flex items-center justify-between">
-        <div className="font-semibold text-lg flex gap-2 items-center text-gray-800">
-          {card.title}
+        <div className="font-semibold text-lg flex gap-2 items-center text-gray-800 truncate max-w-[60%]">
+          <span title={card.title}>{shorten(card.title, 18)}</span>
           {card.link && (
-            <a href="#" className="text-sky-600 text-xs hover:text-sky-700 transition-colors duration-200 underline ml-2 whitespace-nowrap">{card.link}</a>
+            <a href="#" className="text-sky-600 text-xs hover:text-sky-700 transition-colors duration-200 underline ml-2 whitespace-nowrap truncate max-w-[100px]" title={card.link}>{shorten(card.link, 18)}</a>
           )}
         </div>
         <select
@@ -90,12 +93,12 @@ export function DashboardCard({ card }: DashboardCardProps) {
             {card.docList.map((doc) => (
               <div key={doc.code} className="flex justify-between items-center py-2 text-sm hover:bg-gray-50 rounded-lg px-2 transition-colors duration-200">
                 <div>
-                  <div className="font-medium text-gray-800">{doc.name}</div>
-                  <div className="text-xs text-gray-400">{doc.code} ครบกำหนด {doc.due}</div>
+                  <div className="font-medium text-gray-800 truncate max-w-[120px]" title={doc.name}>{shorten(doc.name, 18)}</div>
+                  <div className="text-xs text-gray-400 truncate max-w-[120px]" title={doc.code + ' ครบกำหนด ' + doc.due}>{shorten(doc.code, 12)} ครบกำหนด {doc.due}</div>
                 </div>
                 <div className="flex flex-col items-end">
                   <span className="font-medium text-gray-800">{doc.amount}</span>
-                  <span className="text-xs bg-pink-100 text-pink-600 rounded-full px-3 py-1 mt-1">{doc.status}</span>
+                  <span className="text-xs bg-pink-100 text-pink-600 rounded-full px-3 py-1 mt-1 truncate max-w-[80px]" title={doc.status}>{shorten(doc.status, 10)}</span>
                 </div>
               </div>
             ))}
@@ -103,8 +106,8 @@ export function DashboardCard({ card }: DashboardCardProps) {
         )}
         {/* Empty state */}
         {card.emptyText && !card.docList && (
-          <div className="text-center text-gray-500 text-sm mt-2">
-            {card.emptyText}
+          <div className="text-center text-gray-500 text-sm mt-2 truncate max-w-[220px] mx-auto" title={card.emptyText}>
+            {shorten(card.emptyText, 40)}
           </div>
         )}
         {/* Button */}
